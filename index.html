@@ -60,6 +60,7 @@ h1{font-family:var(--sans); font-weight:700; font-size:14px; line-height:1.2; le
 /* notice */
 .notice{border:1px solid var(--line); background:var(--tint); padding:12px 14px; font-family:var(--serif); font-style:italic; color:var(--muted); font-size:16px}
 .notice b{color:var(--ink); font-weight:600; font-style:normal}
+#toast{position:fixed; left:50%; transform:translateX(-50%); bottom:84px; width:max-content; max-width:88%; background:#1F1C18; color:#FAF7F2; padding:11px 18px; font:700 13px/1.4 Lato,'Segoe UI',sans-serif; letter-spacing:.04em; text-align:center; z-index:99; box-shadow:0 4px 16px rgba(0,0,0,.25)}
 
 /* tools */
 .tools{display:flex; flex-direction:column; gap:12px}
@@ -1668,10 +1669,13 @@ window.qrcode=function(type,ecl){
     render(); if(!keep) window.scrollTo(0,0);
   }
   window.addEventListener('hashchange',function(){route(false)});
-  function say(msg){ var nb=$('#notice'); nb.dataset.msg='1'; nb.hidden=false; nb.textContent=msg; }
+  var toastT=0;
+  function toast(msg,ms){ var t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent=msg; t.hidden=false; clearTimeout(toastT); if(ms!==0) toastT=setTimeout(function(){ t.hidden=true; },ms||5000); }
+  function say(msg){ var nb=$('#notice'); nb.dataset.msg='1'; nb.hidden=false; nb.textContent=msg; toast(msg); }
 
   /* sync between phones with a code (Firebase Realtime Database over plain web requests) */
-  function J(u,o){ return fetch(u,o).then(function(r){ if(!r.ok) throw new Error(r.status); return r.status===204?null:r.json(); }); }
+  function J(u,o,ms){ o=o||{}; var c=window.AbortController?new AbortController():null, t=0; if(c){ o.signal=c.signal; t=setTimeout(function(){ c.abort(); },ms||30000); }
+    return fetch(u,o).then(function(r){ clearTimeout(t); if(!r.ok) throw new Error(r.status); return r.status===204?null:r.json(); },function(e){ clearTimeout(t); throw e; }); }
   function merge(arr,rem){
     var out=[], have={}, pushed=[];
     arr.forEach(function(o){
@@ -1685,9 +1689,12 @@ window.qrcode=function(type,ecl){
     return {out:out,pushed:pushed};
   }
   function syncNow(silent){
-    if(!sy.url||!sy.key||syncing) return Promise.resolve();
+    if(!sy.url||!sy.key) return Promise.resolve();
+    if(syncing){ if(!silent) toast('Sync is already running. Please wait…',4000); return Promise.resolve(); }
     syncing=true; if(isSample){ countries=[]; cities=[]; isSample=false; $('#notice').dataset.msg=''; $('#notice').hidden=true; }
+    if(!silent) toast('Syncing…',0);
     var B=sy.url+'/sync/'+sy.key, BP=sy.url+'/photo/'+sy.key, up={}, before=JSON.stringify(cities)+JSON.stringify(countries), RP={};
+    /* step 1: trips and notes (small) go first, so the other phone sees them right away */
     return Promise.all([J(B+'.json'),J(BP+'.json?shallow=true')]).then(function(r){
       var R=r[0]||{}, rc=R.countries||{}, rt=R.cities||{}, rtomb=R.tomb||{}; RP=r[1]||{};
       Object.keys(rtomb).forEach(function(id){ if(!tomb[id]||tomb[id]<rtomb[id]) tomb[id]=rtomb[id]; });
@@ -1699,20 +1706,25 @@ window.qrcode=function(type,ecl){
         if(rc[id]&&tomb[id]>(rc[id].mod||0)) up['countries/'+id]=null;
         if(rt[id]&&tomb[id]>(rt[id].mod||0)) up['cities/'+id]=null;
       });
-      var ids=[]; cities.forEach(function(t){ (t.photos||[]).forEach(function(q){ ids.push(q.id); }); });
-      return ids.reduce(function(pr,id){ return pr.then(function(){ return get('photo:'+id); }).then(function(loc){
-        if(!loc&&RP[id]) return J(BP+'/'+id+'.json').then(function(d){ if(d){ photoCache[id]=d; return put('photo:'+id,d); } });
-        if(loc&&!RP[id]) return J(BP+'/'+id+'.json?print=silent',{method:'PUT',body:JSON.stringify(loc)});
-      }); },Promise.resolve());
-    }).then(function(){
       if(Object.keys(up).length) return J(B+'.json?print=silent',{method:'PATCH',body:JSON.stringify(up)});
     }).then(function(){
       initJ(); sy.last=new Date().toISOString(); return put('sync',sy).then(persist);
     }).then(function(){
-      syncing=false;
       var a=document.activeElement, typing=a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA');
       if(!silent||(before!==JSON.stringify(cities)+JSON.stringify(countries)&&!typing)) render();
-    }).catch(function(){ syncing=false; if(!silent) say('Sync failed. Check your internet connection and the database address.'); });
+      /* step 2: photos (large), one by one; a photo that fails does not stop the others */
+      var ids=[]; cities.forEach(function(t){ (t.photos||[]).forEach(function(q){ ids.push(q.id); }); });
+      var done=0, failed=0, got=0, todo=ids.length;
+      return ids.reduce(function(pr,id){ return pr.then(function(){ return get('photo:'+id); }).then(function(loc){
+        if(!loc&&RP[id]) return J(BP+'/'+id+'.json',null,120000).then(function(d){ if(d){ photoCache[id]=d; got++; return put('photo:'+id,d); } });
+        if(loc&&!RP[id]) return J(BP+'/'+id+'.json?print=silent',{method:'PUT',body:JSON.stringify(loc)},120000);
+      }).catch(function(){ failed++; }).then(function(){ done++; if(!silent&&todo>3&&done<todo) toast('Photos: '+done+' of '+todo+'…',0); }); },Promise.resolve())
+      .then(function(){
+        syncing=false;
+        if(got) render();
+        if(!silent) toast(failed?'Trips synced. '+failed+(failed===1?' photo':' photos')+' could not be sent. Tap Sync now to try again.':'Synced.',failed?8000:3000);
+      });
+    }).catch(function(){ syncing=false; if(!silent) toast('Sync failed. Check your internet connection and the database rules.',8000); });
   }
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) syncNow(true); });
   function codeOf(){ return btoa(sy.url+'|'+sy.key).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
