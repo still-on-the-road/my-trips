@@ -195,6 +195,12 @@ textarea.notes{min-height:160px}
 .field select{border:1px solid var(--gold); background:var(--paper); padding:11px 12px; min-height:48px; width:100%}
 .panel .btnrow.center{justify-content:center}
 .mapbox{position:relative;height:60vh;min-height:300px;border:1px solid #A98C55;background:#E4ECEB;overflow:hidden;touch-action:none}
+.lmap .leaflet-container,.lmap.leaflet-container{font-family:var(--sans)}
+.lmap .leaflet-control-zoom a{color:#1F1C18;border-radius:0}
+.lmap .leaflet-control-attribution{font-size:10px}
+.pin span{display:block;width:22px;height:22px;margin:2px;border-radius:50%;background:#A98C55;border:3px solid #FAF7F2;box-shadow:0 1px 6px rgba(31,28,24,.45)}
+.pin.on span{background:#1F1C18;transform:scale(1.25)}
+.leaflet-tooltip{font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border-radius:0;border:1px solid #A98C55;color:#1F1C18}
 .mapbtns{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
 .mapcard{display:flex;gap:10px;align-items:center;padding:12px 0}
 .pl{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(169,140,85,.35)}
@@ -1841,7 +1847,53 @@ window.qrcode=function(type,ecl){
         .catch(function(){});
     }); },Promise.resolve()).then(function(){ geoRun=false; });
   }
+  var LF='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
+  function loadLeaflet(){
+    if(window.L&&window.L.map) return Promise.resolve();
+    return new Promise(function(res,rej){
+      var l=document.createElement('link'); l.rel='stylesheet'; l.href=LF+'leaflet.min.css'; document.head.appendChild(l);
+      var sc=document.createElement('script'); sc.src=LF+'leaflet.min.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc);
+      setTimeout(function(){ if(!(window.L&&window.L.map)) rej(new Error('timeout')); },10000);
+    });
+  }
+  /* interactive street map (Leaflet + OpenStreetMap); falls back to the simple outline map when offline */
   function renderMap(v){
+    var g=h('div',{class:'gallery'}), note=h('p',{class:'note'},''), box=h('div',{class:'mapbox lmap'}), info=h('div'), btns=h('div',{class:'btnrow'});
+    g.appendChild(h('div',null,h('h2',{class:'gtitle'},'Map'))); g.appendChild(note); g.appendChild(box); g.appendChild(btns); g.appendChild(info); v.appendChild(g);
+    loadLeaflet().then(function(){
+      if(!box.isConnected) return;
+      var map=L.map(box,{worldCopyJump:true,minZoom:2}).setView([20,0],2), markers=L.layerGroup().addTo(map), sel=null;
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
+      function list(){ return cities.filter(function(t){ return typeof t.lat==='number'; }); }
+      function showInfo(){
+        info.textContent=''; if(!sel) return; var c=countryOf(sel.cid)||{name:''};
+        info.appendChild(h('div',{class:'mapcard'},
+          h('div',{class:'grow'},h('b',null,sel.name),h('div',{class:'sci'},fl(c.name)+c.name+(sel.visited?' \u00b7 '+fmtM(sel.visited):''))),
+          h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(sel.cid)+'/'+encodeURIComponent(sel.id)); }}},'Open')));
+      }
+      function draw(){
+        markers.clearLayers();
+        list().forEach(function(t){
+          var m=L.marker([t.lat,t.lng],{icon:L.divIcon({className:'pin'+(t===sel?' on':''),html:'<span></span>',iconSize:[26,26],iconAnchor:[13,13]}),title:t.name});
+          m.bindTooltip(t.name,{direction:'top',offset:[0,-12]});
+          m.on('click',function(){ sel=t; showInfo(); draw(); });
+          m.addTo(markers);
+        });
+      }
+      function fit(){
+        var ps=list().map(function(t){ return [t.lat,t.lng]; });
+        if(!ps.length) map.setView([20,0],2); else if(ps.length===1) map.setView(ps[0],7); else map.fitBounds(L.latLngBounds(ps),{padding:[40,40],maxZoom:8});
+      }
+      btns.appendChild(h('button',{class:'btn sm',type:'button',on:{click:fit}},'Show all pins'));
+      mapRedraw=function(){ if(!box.isConnected) return; fit(); draw(); };
+      fit(); draw(); setTimeout(function(){ map.invalidateSize(); },150);
+      if(cities.some(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; })){
+        note.textContent='Placing pins from the city names\u2026 this needs an internet connection.';
+        geocodeAll().then(function(){ if(note.isConnected&&/^Placing/.test(note.textContent)) note.textContent=''; });
+      } else if(!cities.length) note.textContent='Add a city to see its pin here.';
+    }).catch(function(){ if(g.isConnected){ v.removeChild(g); renderMapSvg(v); } });
+  }
+  function renderMapSvg(v){
     var g=h('div',{class:'gallery'}), note=h('p',{class:'note'},''), box=h('div',{class:'mapbox'}), info=h('div');
     g.appendChild(h('div',null,h('h2',{class:'gtitle'},'Map'))); g.appendChild(note); g.appendChild(box); g.appendChild(info); v.appendChild(g);
     var w=box.clientWidth, hh=box.clientHeight, svg=sv('svg',{width:'100%',height:'100%'});
