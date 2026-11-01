@@ -2241,7 +2241,8 @@ window.qrcode=function(type,ecl){
     $('#tab-index').setAttribute('aria-pressed',String(!c&&!state.map)); $('#tab-map').setAttribute('aria-pressed',String(!!state.map));
     if(state.map) renderMap(v); else if(t) renderCity(v,c,t); else if(c) renderCountry(v,c); else { renderIndex(v); v.appendChild(syncBlock()); v.appendChild(backupBlock()); }
     var nb=$('#notice');
-    if(isSample && !nb.dataset.msg){ nb.hidden=false; nb.textContent=''; nb.appendChild(h('span',null,h('b',null,'Sample entries. '),'These show how the index looks. Tap Add to start your own list; the samples disappear.')); }
+    if(!isSample && nb.dataset.sample){ delete nb.dataset.sample; if(!nb.dataset.msg){ nb.hidden=true; nb.textContent=''; } }
+    if(isSample && !nb.dataset.msg){ nb.dataset.sample='1'; nb.hidden=false; nb.textContent=''; nb.appendChild(h('span',null,h('b',null,'Sample entries. '),'These show how the index looks. Tap Add to start your own list; the samples disappear.')); }
   }
 
   /* sheet */
