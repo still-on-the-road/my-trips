@@ -196,6 +196,7 @@ textarea.notes{min-height:160px}
 .panel .btnrow.center{justify-content:center}
 .mapbox{position:relative;height:60vh;min-height:300px;border:1px solid #A98C55;background:#E4ECEB;overflow:hidden;touch-action:none}
 .lmap .leaflet-container,.lmap.leaflet-container{font-family:var(--sans)}
+.lmap .leaflet-tile-pane{filter:sepia(.22) saturate(.9)}
 .lmap .leaflet-control-zoom a{color:#1F1C18;border-radius:0}
 .lmap .leaflet-control-attribution{font-size:10px}
 .pin span{display:block;width:22px;height:22px;margin:2px;border-radius:50%;background:#A98C55;border:3px solid #FAF7F2;box-shadow:0 1px 6px rgba(31,28,24,.45)}
@@ -1863,7 +1864,7 @@ window.qrcode=function(type,ecl){
     loadLeaflet().then(function(){
       if(!box.isConnected) return;
       var map=L.map(box,{worldCopyJump:true,minZoom:2}).setView([20,0],2), markers=L.layerGroup().addTo(map), sel=null;
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
       function list(){ return cities.filter(function(t){ return typeof t.lat==='number'; }); }
       function showInfo(){
         info.textContent=''; if(!sel) return; var c=countryOf(sel.cid)||{name:''};
