@@ -2129,7 +2129,6 @@ window.qrcode=function(type,ecl){
     g.appendChild(sec('Visited'));
     if(t.sample){ g.appendChild(h('p',{class:'note'},t.visited?fmtM(t.visited):'Not set')); }
     else { var vi=h('input',{type:'month',value:t.visited||'','aria-label':'Month visited'}); vi.addEventListener('change',function(){ t.visited=vi.value; saveData(); }); g.appendChild(h('div',{class:'field'},vi)); }
-    placesBlock(g,c,t);
     g.appendChild(sec('Photos'));
     if(!pics.length) g.appendChild(h('p',{class:'note'},t.sample?'Photos you add will show here.':'No photos yet. Tap Add photos.'));
     var gal=h('div',{class:'gal'});
