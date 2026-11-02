@@ -195,13 +195,23 @@ textarea.notes{min-height:160px}
 .field select{border:1px solid var(--gold); background:var(--paper); padding:11px 12px; min-height:48px; width:100%}
 .panel .btnrow.center{justify-content:center}
 .mapbox{position:relative;height:60vh;min-height:300px;border:1px solid #A98C55;background:#E4ECEB;overflow:hidden;touch-action:none}
-.lmap .leaflet-container,.lmap.leaflet-container{font-family:var(--sans)}
-.lmap .leaflet-tile-pane{filter:sepia(.22) saturate(.9)}
-.lmap .leaflet-control-zoom a{color:#1F1C18;border-radius:0}
-.lmap .leaflet-control-attribution{font-size:10px}
-.pin span{display:block;width:22px;height:22px;margin:2px;border-radius:50%;background:#A98C55;border:3px solid #FAF7F2;box-shadow:0 1px 6px rgba(31,28,24,.45)}
-.pin.on span{background:#1F1C18;transform:scale(1.25)}
-.leaflet-tooltip{font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border-radius:0;border:1px solid #A98C55;color:#1F1C18}
+body.mapmode .app{display:none}
+body.mapmode{padding:0}
+#mapfull{position:fixed;left:0;right:0;top:0;z-index:5;background:#E9E5DC}
+.mf-map{position:absolute;inset:0}
+.mf-top{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;right:58px;z-index:2}
+.mf-search{width:100%;border:1px solid var(--gold);background:var(--paper);padding:0 14px;min-height:46px;font-size:16px;box-shadow:0 2px 10px rgba(31,28,24,.2)}
+.mf-search::placeholder{color:var(--muted);font-family:var(--serif);font-style:italic}
+.mf-res{background:var(--paper);border:1px solid var(--gold);border-top:0;box-shadow:0 6px 16px rgba(31,28,24,.22);max-height:42vh;overflow:auto}
+.mf-res button{display:flex;width:100%;gap:10px;align-items:baseline;padding:13px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font-size:15px}
+.mf-chip{margin-top:8px;background:var(--btn);color:var(--on-btn);border:0;padding:9px 14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 2px 8px rgba(31,28,24,.3)}
+.mf-card{position:absolute;left:10px;right:10px;bottom:30px;z-index:2;background:var(--paper);border:1px solid var(--gold);box-shadow:0 6px 20px rgba(31,28,24,.3);display:flex;gap:12px;padding:10px;align-items:center}
+.mf-card .th{width:52px;flex:none}
+.mf-card .grow{flex:1;min-width:0}
+.mf-banner{position:absolute;left:10px;right:10px;bottom:30px;z-index:3;background:var(--btn);color:var(--on-btn);display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;font-weight:700;font-size:14px}
+.maplibregl-ctrl-group{border-radius:0!important;box-shadow:0 2px 8px rgba(31,28,24,.25)!important}
+.maplibregl-ctrl-top-right{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
+.maplibregl-ctrl-attrib{font-size:10px}
 .mapbtns{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
 .mapcard{display:flex;gap:10px;align-items:center;padding:12px 0}
 .pl{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(169,140,85,.35)}
@@ -1641,6 +1651,7 @@ window.qrcode=function(type,ecl){
   }
   var CC={"ascension island":"AC","andorra":"AD","united arab emirates":"AE","afghanistan":"AF","antigua barbuda":"AG","anguilla":"AI","albania":"AL","armenia":"AM","angola":"AO","antarctica":"AQ","argentina":"AR","american samoa":"AS","austria":"AT","australia":"AU","aruba":"AW","aland islands":"AX","azerbaijan":"AZ","bosnia herzegovina":"BA","barbados":"BB","bangladesh":"BD","belgium":"BE","burkina faso":"BF","bulgaria":"BG","bahrain":"BH","burundi":"BI","benin":"BJ","st barthelemy":"BL","bermuda":"BM","brunei":"BN","bolivia":"BO","caribbean netherlands":"BQ","brazil":"BR","bahamas":"BS","bhutan":"BT","bouvet island":"BV","botswana":"BW","belarus":"BY","belize":"BZ","canada":"CA","cocos keeling islands":"CC","congo kinshasa":"CD","central african republic":"CF","congo brazzaville":"CG","switzerland":"CH","cote d ivoire":"CI","cook islands":"CK","chile":"CL","cameroon":"CM","china":"CN","colombia":"CO","clipperton island":"CP","sark":"CQ","costa rica":"CR","cuba":"CU","cape verde":"CV","curacao":"CW","christmas island":"CX","cyprus":"CY","czechia":"CZ","germany":"DE","diego garcia":"DG","djibouti":"DJ","denmark":"DK","dominica":"DM","dominican republic":"DO","algeria":"DZ","ceuta melilla":"EA","ecuador":"EC","estonia":"EE","egypt":"EG","western sahara":"EH","eritrea":"ER","spain":"ES","ethiopia":"ET","eurozone":"EZ","finland":"FI","fiji":"FJ","falkland islands":"FK","micronesia":"FM","faroe islands":"FO","france":"FR","gabon":"GA","united kingdom":"GB","grenada":"GD","georgia":"GE","french guiana":"GF","guernsey":"GG","ghana":"GH","gibraltar":"GI","greenland":"GL","gambia":"GM","guinea":"GN","guadeloupe":"GP","equatorial guinea":"GQ","greece":"GR","south georgia south sandwich islands":"GS","guatemala":"GT","guam":"GU","guinea bissau":"GW","guyana":"GY","hong kong sar china":"HK","heard mcdonald islands":"HM","honduras":"HN","croatia":"HR","haiti":"HT","hungary":"HU","canary islands":"IC","indonesia":"ID","ireland":"IE","israel":"IL","isle of man":"IM","india":"IN","british indian ocean territory":"IO","iraq":"IQ","iran":"IR","iceland":"IS","italy":"IT","jersey":"JE","jamaica":"JM","jordan":"JO","japan":"JP","kenya":"KE","kyrgyzstan":"KG","cambodia":"KH","kiribati":"KI","comoros":"KM","st kitts nevis":"KN","north korea":"KP","south korea":"KR","kuwait":"KW","cayman islands":"KY","kazakhstan":"KZ","laos":"LA","lebanon":"LB","st lucia":"LC","liechtenstein":"LI","sri lanka":"LK","liberia":"LR","lesotho":"LS","lithuania":"LT","luxembourg":"LU","latvia":"LV","libya":"LY","morocco":"MA","monaco":"MC","moldova":"MD","montenegro":"ME","st martin":"MF","madagascar":"MG","marshall islands":"MH","north macedonia":"MK","mali":"ML","myanmar burma":"MM","mongolia":"MN","macao sar china":"MO","northern mariana islands":"MP","martinique":"MQ","mauritania":"MR","montserrat":"MS","malta":"MT","mauritius":"MU","maldives":"MV","malawi":"MW","mexico":"MX","malaysia":"MY","mozambique":"MZ","namibia":"NA","new caledonia":"NC","niger":"NE","norfolk island":"NF","nigeria":"NG","nicaragua":"NI","netherlands":"NL","norway":"NO","nepal":"NP","nauru":"NR","niue":"NU","new zealand":"NZ","oman":"OM","panama":"PA","peru":"PE","french polynesia":"PF","papua new guinea":"PG","philippines":"PH","pakistan":"PK","poland":"PL","st pierre miquelon":"PM","pitcairn islands":"PN","puerto rico":"PR","palestinian territories":"PS","portugal":"PT","palau":"PW","paraguay":"PY","qatar":"QA","reunion":"RE","romania":"RO","serbia":"RS","russia":"RU","rwanda":"RW","saudi arabia":"SA","solomon islands":"SB","seychelles":"SC","sudan":"SD","sweden":"SE","singapore":"SG","st helena":"SH","slovenia":"SI","svalbard jan mayen":"SJ","slovakia":"SK","sierra leone":"SL","san marino":"SM","senegal":"SN","somalia":"SO","suriname":"SR","south sudan":"SS","sao tome principe":"ST","el salvador":"SV","sint maarten":"SX","syria":"SY","eswatini":"SZ","tristan da cunha":"TA","turks caicos islands":"TC","chad":"TD","french southern territories":"TF","togo":"TG","thailand":"TH","tajikistan":"TJ","tokelau":"TK","timor leste":"TL","turkmenistan":"TM","tunisia":"TN","tonga":"TO","turkiye":"TR","trinidad tobago":"TT","tuvalu":"TV","taiwan":"TW","tanzania":"TZ","ukraine":"UA","uganda":"UG","u s outlying islands":"UM","united states":"US","uruguay":"UY","uzbekistan":"UZ","vatican city":"VA","st vincent grenadines":"VC","venezuela":"VE","british virgin islands":"VG","u s virgin islands":"VI","vietnam":"VN","vanuatu":"VU","wallis futuna":"WF","samoa":"WS","kosovo":"XK","yemen":"YE","mayotte":"YT","south africa":"ZA","zambia":"ZM","zimbabwe":"ZW","isla de la ascension":"AC","emiratos arabes unidos":"AE","afganistan":"AF","antigua y barbuda":"AG","anguila":"AI","antartida":"AQ","samoa americana":"AS","islas aland":"AX","azerbaiyan":"AZ","bosnia y herzegovina":"BA","banglades":"BD","belgica":"BE","barein":"BH","san bartolome":"BL","bermudas":"BM","caribe neerlandes":"BQ","brasil":"BR","butan":"BT","isla bouvet":"BV","botsuana":"BW","bielorrusia":"BY","belice":"BZ","islas cocos":"CC","republica democratica del congo":"CD","republica centroafricana":"CF","congo":"CG","suiza":"CH","islas cook":"CK","camerun":"CM","isla clipperton":"CP","cabo verde":"CV","curazao":"CW","isla de navidad":"CX","chipre":"CY","chequia":"CZ","alemania":"DE","yibuti":"DJ","dinamarca":"DK","republica dominicana":"DO","argelia":"DZ","ceuta y melilla":"EA","egipto":"EG","sahara occidental":"EH","espana":"ES","etiopia":"ET","zona del euro":"EZ","finlandia":"FI","fiyi":"FJ","islas malvinas":"FK","islas feroe":"FO","francia":"FR","reino unido":"GB","granada":"GD","guayana francesa":"GF","guernesey":"GG","groenlandia":"GL","guadalupe":"GP","guinea ecuatorial":"GQ","grecia":"GR","islas georgia del sur y sandwich del sur":"GS","guinea bisau":"GW","rae de hong kong china":"HK","islas heard y mcdonald":"HM","croacia":"HR","hungria":"HU","canarias":"IC","irlanda":"IE","isla de man":"IM","territorio britanico del oceano indico":"IO","irak":"IQ","islandia":"IS","italia":"IT","jordania":"JO","japon":"JP","kenia":"KE","kirguistan":"KG","camboya":"KH","comoras":"KM","san cristobal y nieves":"KN","corea del norte":"KP","corea del sur":"KR","islas caiman":"KY","kazajistan":"KZ","libano":"LB","santa lucia":"LC","lesoto":"LS","lituania":"LT","luxemburgo":"LU","letonia":"LV","libia":"LY","marruecos":"MA","moldavia":"MD","san martin":"MF","islas marshall":"MH","macedonia del norte":"MK","myanmar birmania":"MM","rae de macao china":"MO","islas marianas del norte":"MP","martinica":"MQ","mauricio":"MU","maldivas":"MV","malaui":"MW","malasia":"MY","nueva caledonia":"NC","isla norfolk":"NF","paises bajos":"NL","noruega":"NO","nueva zelanda":"NZ","polinesia francesa":"PF","papua nueva guinea":"PG","filipinas":"PH","polonia":"PL","san pedro y miquelon":"PM","islas pitcairn":"PN","territorios palestinos":"PS","palaos":"PW","catar":"QA","rumania":"RO","rusia":"RU","ruanda":"RW","arabia saudi":"SA","islas salomon":"SB","suecia":"SE","singapur":"SG","santa elena":"SH","eslovenia":"SI","svalbard y jan mayen":"SJ","eslovaquia":"SK","sierra leona":"SL","surinam":"SR","sudan del sur":"SS","santo tome y principe":"ST","siria":"SY","esuatini":"SZ","tristan de acuna":"TA","islas turcas y caicos":"TC","territorios australes franceses":"TF","tailandia":"TH","tayikistan":"TJ","tunez":"TN","turquia":"TR","trinidad y tobago":"TT","ucrania":"UA","islas menores alejadas de ee uu":"UM","estados unidos":"US","ciudad del vaticano":"VA","san vicente y las granadinas":"VC","islas virgenes britanicas":"VG","islas virgenes de ee uu":"VI","wallis y futuna":"WF","sudafrica":"ZA","zimbabue":"ZW","ile de l ascension":"AC","andorre":"AD","emirats arabes unis":"AE","antigua et barbuda":"AG","albanie":"AL","armenie":"AM","antarctique":"AQ","argentine":"AR","samoa americaines":"AS","autriche":"AT","australie":"AU","iles aland":"AX","azerbaidjan":"AZ","bosnie herzegovine":"BA","barbade":"BB","belgique":"BE","bulgarie":"BG","bahrein":"BH","saint barthelemy":"BL","bermudes":"BM","bolivie":"BO","pays bas caribeens":"BQ","bresil":"BR","bhoutan":"BT","ile bouvet":"BV","bielorussie":"BY","iles cocos":"CC","republique centrafricaine":"CF","suisse":"CH","iles cook":"CK","chili":"CL","cameroun":"CM","chine":"CN","colombie":"CO","ile clipperton":"CP","cap vert":"CV","ile christmas":"CX","chypre":"CY","tchequie":"CZ","allemagne":"DE","danemark":"DK","dominique":"DM","republique dominicaine":"DO","algerie":"DZ","ceuta et melilla":"EA","equateur":"EC","estonie":"EE","egypte":"EG","erythree":"ER","espagne":"ES","ethiopie":"ET","zone euro":"EZ","finlande":"FI","fidji":"FJ","iles malouines":"FK","micronesie":"FM","iles feroe":"FO","royaume uni":"GB","grenade":"GD","georgie":"GE","guyane francaise":"GF","groenland":"GL","gambie":"GM","guinee":"GN","guinee equatoriale":"GQ","grece":"GR","georgie du sud et les iles sandwich du sud":"GS","guinee bissau":"GW","r a s chinoise de hong kong":"HK","iles heard et macdonald":"HM","croatie":"HR","hongrie":"HU","iles canaries":"IC","indonesie":"ID","irlande":"IE","ile de man":"IM","inde":"IN","territoire britannique de l ocean indien":"IO","islande":"IS","italie":"IT","jamaique":"JM","jordanie":"JO","kirghizstan":"KG","cambodge":"KH","comores":"KM","saint christophe et nieves":"KN","coree du nord":"KP","coree du sud":"KR","koweit":"KW","iles caimans":"KY","liban":"LB","sainte lucie":"LC","lituanie":"LT","lettonie":"LV","libye":"LY","maroc":"MA","moldavie":"MD","saint martin":"MF","iles marshall":"MH","macedoine du nord":"MK","myanmar birmanie":"MM","mongolie":"MN","r a s chinoise de macao":"MO","iles mariannes du nord":"MP","mauritanie":"MR","malte":"MT","maurice":"MU","mexique":"MX","malaisie":"MY","namibie":"NA","nouvelle caledonie":"NC","ile norfolk":"NF","pays bas":"NL","norvege":"NO","nouvelle zelande":"NZ","perou":"PE","polynesie francaise":"PF","papouasie nouvelle guinee":"PG","pologne":"PL","saint pierre et miquelon":"PM","iles pitcairn":"PN","porto rico":"PR","territoires palestiniens":"PS","la reunion":"RE","roumanie":"RO","serbie":"RS","russie":"RU","arabie saoudite":"SA","iles salomon":"SB","soudan":"SD","suede":"SE","singapour":"SG","sainte helene":"SH","slovenie":"SI","svalbard et jan mayen":"SJ","slovaquie":"SK","saint marin":"SM","somalie":"SO","soudan du sud":"SS","sao tome et principe":"ST","salvador":"SV","saint martin partie neerlandaise":"SX","syrie":"SY","iles turques et caiques":"TC","tchad":"TD","terres australes francaises":"TF","thailande":"TH","tadjikistan":"TJ","timor oriental":"TL","tunisie":"TN","turquie":"TR","trinite et tobago":"TT","tanzanie":"TZ","ouganda":"UG","iles mineures eloignees des etats unis":"UM","etats unis":"US","ouzbekistan":"UZ","etat de la cite du vatican":"VA","saint vincent et les grenadines":"VC","iles vierges britanniques":"VG","iles vierges des etats unis":"VI","viet nam":"VN","wallis et futuna":"WF","afrique du sud":"ZA","zambie":"ZM","ilha de ascensao":"AC","emirados arabes unidos":"AE","afeganistao":"AF","antigua e barbuda":"AG","ilhas aland":"AX","azerbaijao":"AZ","bosnia e herzegovina":"BA","burquina faso":"BF","sao bartolomeu":"BL","paises baixos caribenhos":"BQ","butao":"BT","ilha bouvet":"BV","bielorrussia":"BY","ilhas cocos keeling":"CC","republica centro africana":"CF","republica do congo":"CG","suica":"CH","costa do marfim":"CI","ilhas cook":"CK","camaroes":"CM","ilha de clipperton":"CP","ilha christmas":"CX","tchequia":"CZ","alemanha":"DE","djibuti":"DJ","ceuta e melilla":"EA","equador":"EC","egito":"EG","saara ocidental":"EH","eritreia":"ER","espanha":"ES","zona do euro":"EZ","ilhas malvinas":"FK","ilhas faroe":"FO","franca":"FR","gabao":"GA","guiana francesa":"GF","gana":"GH","guine":"GN","guine equatorial":"GQ","ilhas georgia do sul e sandwich do sul":"GS","guine bissau":"GW","guiana":"GY","hong kong rae da china":"HK","ilhas heard e mcdonald":"HM","ilhas canarias":"IC","ilha de man":"IM","territorio britanico do oceano indico":"IO","iraque":"IQ","ira":"IR","japao":"JP","quenia":"KE","quirguistao":"KG","camboja":"KH","quiribati":"KI","sao cristovao e nevis":"KN","coreia do norte":"KP","coreia do sul":"KR","ilhas cayman":"KY","cazaquistao":"KZ","marrocos":"MA","sao martinho":"MF","ilhas marshall":"MH","macedonia do norte":"MK","mianmar birmania":"MM","macau rae da china":"MO","ilhas marianas do norte":"MP","mocambique":"MZ","nova caledonia":"NC","ilha norfolk":"NF","paises baixos":"NL","nova zelandia":"NZ","oma":"OM","papua nova guine":"PG","paquistao":"PK","sao pedro e miquelao":"PM","ilhas pitcairn":"PN","paraguai":"PY","reuniao":"RE","romenia":"RO","servia":"RS","arabia saudita":"SA","ilhas salomao":"SB","seicheles":"SC","sudao":"SD","singapura":"SG","santa helena":"SH","svalbard e jan mayen":"SJ","serra leoa":"SL","sudao do sul":"SS","sao tome e principe":"ST","essuatini":"SZ","tristao da cunha":"TA","ilhas turcas e caicos":"TC","chade":"TD","territorios franceses do sul":"TF","tadjiquistao":"TJ","turcomenistao":"TM","trinidad e tobago":"TT","ilhas menores distantes dos eua":"UM","uruguai":"UY","uzbequistao":"UZ","cidade do vaticano":"VA","sao vicente e granadinas":"VC","ilhas virgens britanicas":"VG","ilhas virgens americanas":"VI","vietna":"VN","wallis e futuna":"WF","iemen":"YE","africa do sul":"ZA","isola ascensione":"AC","emirati arabi uniti":"AE","antartide":"AQ","samoa americane":"AS","isole aland":"AX","azerbaigian":"AZ","bosnia ed erzegovina":"BA","belgio":"BE","caraibi olandesi":"BQ","brasile":"BR","isola bouvet":"BV","bielorussia":"BY","isole cocos keeling":"CC","repubblica centrafricana":"CF","svizzera":"CH","costa d avorio":"CI","isole cook":"CK","cile":"CL","cina":"CN","isola di clipperton":"CP","capo verde":"CV","isola christmas":"CX","cipro":"CY","cechia":"CZ","germania":"DE","gibuti":"DJ","danimarca":"DK","repubblica dominicana":"DO","egitto":"EG","sahara occidentale":"EH","spagna":"ES","eurozona":"EZ","figi":"FJ","isole falkland":"FK","isole f r er":"FO","regno unito":"GB","guyana francese":"GF","gibilterra":"GI","guadalupa":"GP","guinea equatoriale":"GQ","georgia del sud e sandwich australi":"GS","ras di hong kong":"HK","isole heard e mcdonald":"HM","croazia":"HR","ungheria":"HU","isole canarie":"IC","israele":"IL","isola di man":"IM","territorio britannico dell oceano indiano":"IO","islanda":"IS","giamaica":"JM","giordania":"JO","giappone":"JP","kirghizistan":"KG","cambogia":"KH","comore":"KM","saint kitts e nevis":"KN","corea del nord":"KP","corea del sud":"KR","isole cayman":"KY","kazakistan":"KZ","saint lucia":"LC","lussemburgo":"LU","lettonia":"LV","marocco":"MA","isole marshall":"MH","macedonia del nord":"MK","ras di macao":"MO","isole marianne settentrionali":"MP","maldive":"MV","messico":"MX","mozambico":"MZ","nuova caledonia":"NC","isola norfolk":"NF","paesi bassi":"NL","norvegia":"NO","nuova zelanda":"NZ","polinesia francese":"PF","papua nuova guinea":"PG","filippine":"PH","saint pierre e miquelon":"PM","isole pitcairn":"PN","portorico":"PR","territori palestinesi":"PS","portogallo":"PT","riunione":"RE","isole salomone":"SB","svezia":"SE","sant elena":"SH","slovacchia":"SK","sud sudan":"SS","isole turks e caicos":"TC","ciad":"TD","terre australi francesi":"TF","thailandia":"TH","tagikistan":"TJ","timor est":"TL","turchia":"TR","ucraina":"UA","isole minori esterne degli stati uniti":"UM","stati uniti":"US","citta del vaticano":"VA","saint vincent e grenadine":"VC","isole vergini britanniche":"VG","isole vergini americane":"VI","ascension":"AC","vereinigte arabische emirate":"AE","antigua und barbuda":"AG","albanien":"AL","armenien":"AM","antarktis":"AQ","argentinien":"AR","amerikanisch samoa":"AS","osterreich":"AT","australien":"AU","alandinseln":"AX","aserbaidschan":"AZ","bosnien und herzegowina":"BA","bangladesch":"BD","belgien":"BE","bulgarien":"BG","brunei darussalam":"BN","bolivien":"BO","karibische niederlande":"BQ","brasilien":"BR","bouvetinsel":"BV","kanada":"CA","kokosinseln":"CC","kongo kinshasa":"CD","zentralafrikanische republik":"CF","kongo brazzaville":"CG","schweiz":"CH","cookinseln":"CK","kamerun":"CM","kolumbien":"CO","clipperton insel":"CP","kuba":"CU","weihnachtsinsel":"CX","zypern":"CY","tschechien":"CZ","deutschland":"DE","dschibuti":"DJ","dominikanische republik":"DO","algerien":"DZ","ceuta und melilla":"EA","estland":"EE","agypten":"EG","westsahara":"EH","spanien":"ES","athiopien":"ET","finnland":"FI","fidschi":"FJ","falklandinseln":"FK","mikronesien":"FM","faroer":"FO","frankreich":"FR","gabun":"GA","vereinigtes konigreich":"GB","georgien":"GE","franzosisch guayana":"GF","gronland":"GL","aquatorialguinea":"GQ","griechenland":"GR","sudgeorgien und die sudlichen sandwichinseln":"GS","sonderverwaltungsregion hongkong":"HK","heard und mcdonaldinseln":"HM","kroatien":"HR","ungarn":"HU","kanarische inseln":"IC","indonesien":"ID","irland":"IE","indien":"IN","britisches territorium im indischen ozean":"IO","island":"IS","italien":"IT","jamaika":"JM","jordanien":"JO","kirgisistan":"KG","kambodscha":"KH","komoren":"KM","st kitts und nevis":"KN","nordkorea":"KP","sudkorea":"KR","kaimaninseln":"KY","kasachstan":"KZ","libanon":"LB","litauen":"LT","luxemburg":"LU","lettland":"LV","libyen":"LY","marokko":"MA","republik moldau":"MD","madagaskar":"MG","marshallinseln":"MH","nordmazedonien":"MK","myanmar":"MM","mongolei":"MN","sonderverwaltungsregion macau":"MO","nordliche marianen":"MP","mauretanien":"MR","malediven":"MV","mexiko":"MX","mosambik":"MZ","neukaledonien":"NC","norfolkinsel":"NF","niederlande":"NL","norwegen":"NO","neuseeland":"NZ","franzosisch polynesien":"PF","papua neuguinea":"PG","philippinen":"PH","polen":"PL","st pierre und miquelon":"PM","pitcairninseln":"PN","palastinensische autonomiegebiete":"PS","katar":"QA","rumanien":"RO","serbien":"RS","russland":"RU","saudi arabien":"SA","salomonen":"SB","seychellen":"SC","schweden":"SE","slowenien":"SI","spitzbergen und jan mayen":"SJ","slowakei":"SK","sudsudan":"SS","sao tome und principe":"ST","syrien":"SY","turks und caicosinseln":"TC","tschad":"TD","franzosische sud und antarktisgebiete":"TF","tadschikistan":"TJ","tunesien":"TN","turkei":"TR","trinidad und tobago":"TT","tansania":"TZ","amerikanische uberseeinseln":"UM","vereinigte staaten":"US","usbekistan":"UZ","vatikanstadt":"VA","st vincent und die grenadinen":"VC","britische jungferninseln":"VG","amerikanische jungferninseln":"VI","wallis und futuna":"WF","jemen":"YE","sudafrika":"ZA","sambia":"ZM","simbabwe":"ZW","usa":"US","us":"US","united states of america":"US","ee uu":"US","eeuu":"US","uk":"GB","england":"GB","scotland":"GB","wales":"GB","great britain":"GB","holland":"NL","the netherlands":"NL","ivory coast":"CI","burma":"MM","czech republic":"CZ","swaziland":"SZ","turkey":"TR","uae":"AE","east timor":"TL"};
   function flag(n){var k=(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim(), c=CC[k]; return c?String.fromCodePoint(127397+c.charCodeAt(0),127397+c.charCodeAt(1)):''; }
+  function ccOf(n){ var k=(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim(); return CC[k]||''; }
   function fl(n){var f=flag(n);return f?f+' ':''}
   function fmtM(m){var p=(m||'').split('-'); if(p.length<2) return ''; var d=new Date(+p[0],+p[1]-1,1); return isNaN(d)?'':d.toLocaleDateString('en',{month:'short',year:'numeric'});}
   function letterOf(nm){
@@ -1835,64 +1846,195 @@ window.qrcode=function(type,ecl){
         .then(function(tp){ worldD=topoD(tp); put('worldd',worldD); return worldD; });
     });
   }
+  function geoFind(t,c){
+    var base='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=en&';
+    function q(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }); }
+    return q(base+'q='+encodeURIComponent(t.name+', '+c.name)).then(function(a){
+      if(!Array.isArray(a)) throw new Error('bad answer');
+      if(a[0]) return a[0];
+      var k=ccOf(c.name); if(!k) return null;
+      return new Promise(function(r){ setTimeout(r,1100); }).then(function(){ return q(base+'countrycodes='+k.toLowerCase()+'&q='+encodeURIComponent(t.name)); })
+        .then(function(b){ if(!Array.isArray(b)) throw new Error('bad answer'); return b[0]||null; });
+    });
+  }
   function geocodeAll(){
     if(geoRun) return Promise.resolve(); geoRun=true;
     var todo=cities.filter(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; });
     return todo.reduce(function(pr,t){ return pr.then(function(){
       var c=countryOf(t.cid); if(!c) return;
-      return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=en&q='+encodeURIComponent(t.name+', '+c.name))
-        .then(function(r){ return r.json(); })
-        .then(function(a){ if(a&&a[0]){ t.lat=+a[0].lat; t.lng=+a[0].lon; } else t.geo='none'; return saveData(); })
+      return geoFind(t,c)
+        .then(function(a){ if(a){ t.lat=+a.lat; t.lng=+a.lon; delete t.geo; } else t.geo='none'; return saveData(); })
         .then(function(){ if(state.map&&mapRedraw) mapRedraw(); })
         .then(function(){ return new Promise(function(r){ setTimeout(r,1100); }); })
-        .catch(function(){});
-    }); },Promise.resolve()).then(function(){ geoRun=false; });
+        .catch(function(){ return new Promise(function(r){ setTimeout(r,1100); }); });
+    }); },Promise.resolve()).then(function(){ geoRun=false; },function(){ geoRun=false; });
   }
-  var LF='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
-  function loadLeaflet(){
-    if(window.L&&window.L.map) return Promise.resolve();
+  /* ---- full-screen map (MapLibre GL + MapTiler) ---- */
+  var MT_KEYS=['e5mV0QX25TdmK2te5ETK','e5mVOQX25TdmK2te5ETK'];
+  var MT_STYLES=['streets-v2-pastel','basic-v2-light','streets-v2'];
+  var MLV='https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/';
+  var mapInst=null, mapView=null, mapSel='', mapPlacing=null, geoReset=false;
+  function loadMapLib(){
+    if(window.maplibregl) return Promise.resolve();
     return new Promise(function(res,rej){
-      var l=document.createElement('link'); l.rel='stylesheet'; l.href=LF+'leaflet.min.css'; document.head.appendChild(l);
-      var sc=document.createElement('script'); sc.src=LF+'leaflet.min.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc);
-      setTimeout(function(){ if(!(window.L&&window.L.map)) rej(new Error('timeout')); },10000);
+      var l=document.createElement('link'); l.rel='stylesheet'; l.href=MLV+'maplibre-gl.css'; document.head.appendChild(l);
+      var sc=document.createElement('script'); sc.src=MLV+'maplibre-gl.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc);
+      setTimeout(function(){ if(!window.maplibregl) rej(new Error('timeout')); },12000);
     });
   }
-  /* interactive street map (Leaflet + OpenStreetMap); falls back to the simple outline map when offline */
+  function mapStyleUrl(){
+    var saved=''; try{ saved=localStorage.getItem('mapstyle')||''; }catch(e){}
+    var list=[]; if(saved) list.push(saved);
+    MT_KEYS.forEach(function(k){ MT_STYLES.forEach(function(s){ list.push('https://api.maptiler.com/maps/'+s+'/style.json?key='+k); }); });
+    return list.reduce(function(pr,u){ return pr.then(function(found){
+      if(found) return found;
+      return fetch(u).then(function(r){ if(!r.ok) return ''; try{ localStorage.setItem('mapstyle',u); }catch(e){} return u; }).catch(function(){ return ''; });
+    }); },Promise.resolve('')).then(function(u){ if(!u) throw new Error('style'); return u; });
+  }
+  function destroyMap(){
+    if(mapInst){ try{ mapView={c:mapInst.getCenter(),z:mapInst.getZoom()}; mapInst.remove(); }catch(e){} mapInst=null; }
+    var w=document.getElementById('mapfull'); if(w) w.remove();
+    document.body.classList.remove('mapmode'); mapPlacing=null; if(mapRedraw) mapRedraw=null;
+  }
+  function placedCities(){ return cities.filter(function(t){ return typeof t.lat==='number'&&typeof t.lng==='number'; }); }
   function renderMap(v){
-    var g=h('div',{class:'gallery'}), note=h('p',{class:'note'},''), box=h('div',{class:'mapbox lmap'}), info=h('div'), btns=h('div',{class:'btnrow'});
-    g.appendChild(h('div',null,h('h2',{class:'gtitle'},'Map'))); g.appendChild(note); g.appendChild(box); g.appendChild(btns); g.appendChild(info); v.appendChild(g);
-    loadLeaflet().then(function(){
-      if(!box.isConnected) return;
-      var map=L.map(box,{worldCopyJump:true,minZoom:2}).setView([20,0],2), markers=L.layerGroup().addTo(map), sel=null;
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
-      function list(){ return cities.filter(function(t){ return typeof t.lat==='number'; }); }
-      function showInfo(){
-        info.textContent=''; if(!sel) return; var c=countryOf(sel.cid)||{name:''};
-        info.appendChild(h('div',{class:'mapcard'},
-          h('div',{class:'grow'},h('b',null,sel.name),h('div',{class:'sci'},fl(c.name)+c.name+(sel.visited?' \u00b7 '+fmtM(sel.visited):''))),
-          h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(sel.cid)+'/'+encodeURIComponent(sel.id)); }}},'Open')));
+    if(!geoReset){ geoReset=true; cities.forEach(function(t){ if(t.geo==='none') delete t.geo; }); }
+    var note=h('p',{class:'note'},'Loading the map…'); v.appendChild(h('div',{class:'gallery'},h('div',null,h('h2',{class:'gtitle'},'Map')),note));
+    Promise.all([loadMapLib(),mapStyleUrl()]).then(function(r){
+      if(!state.map||!v.isConnected) return;
+      buildMap(r[1]);
+    }).catch(function(){
+      if(!state.map||!v.isConnected) return;
+      v.textContent=''; renderMapSvg(v);
+    });
+  }
+  function buildMap(styleUrl){
+    destroyMap();
+    var wrap=h('div',{id:'mapfull'}), mapEl=h('div',{class:'mf-map'}), top=h('div',{class:'mf-top'}), card=h('div',{class:'mf-card'}), banner=h('div',{class:'mf-banner'});
+    var navbar=document.querySelector('.bar'); wrap.style.bottom=(navbar?navbar.offsetHeight:56)+'px';
+    card.hidden=true; banner.hidden=true;
+    wrap.appendChild(mapEl); wrap.appendChild(top); wrap.appendChild(banner); wrap.appendChild(card);
+    document.body.appendChild(wrap); document.body.classList.add('mapmode');
+
+    var pts=placedCities(), opts={container:mapEl,style:styleUrl,attributionControl:false,dragRotate:false,minZoom:1,maxZoom:18,center:[0,20],zoom:1.4};
+    if(mapView){ opts.center=[mapView.c.lng,mapView.c.lat]; opts.zoom=mapView.z; }
+    var map=new maplibregl.Map(opts); mapInst=map;
+    try{ map.touchZoomRotate.disableRotation(); }catch(e){}
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+
+    function geo(){
+      return {type:'FeatureCollection',features:placedCities().map(function(t){
+        return {type:'Feature',properties:{id:t.id,name:t.name},geometry:{type:'Point',coordinates:[t.lng,t.lat]}};
+      })};
+    }
+    function fitAll(anim){
+      var ps=placedCities(); if(!ps.length) return;
+      if(ps.length===1){ map.easeTo({center:[ps[0].lng,ps[0].lat],zoom:6,duration:anim?800:0}); return; }
+      var b=new maplibregl.LngLatBounds(); ps.forEach(function(t){ b.extend([t.lng,t.lat]); });
+      map.fitBounds(b,{padding:{top:90,bottom:70,left:40,right:40},maxZoom:6,duration:anim?800:0});
+    }
+    function refresh(){
+      var s=map.getSource('pins'); if(s) s.setData(geo());
+      var un=cities.filter(function(t){ return typeof t.lat!=='number'; });
+      chip.textContent=''; chip.hidden=!un.length;
+      if(un.length) chip.appendChild(document.createTextNode(un.length+(un.length===1?' city':' cities')+' not on the map'));
+    }
+    function select(id,fly){
+      mapSel=id||'';
+      if(map.getLayer('pt-sel')) map.setFilter('pt-sel',['all',['!',['has','point_count']],['==',['get','id'],mapSel]]);
+      showCard();
+      var t=id?cityOf(id):null;
+      if(t&&fly&&typeof t.lat==='number') map.easeTo({center:[t.lng,t.lat],zoom:Math.max(map.getZoom(),5),duration:700});
+    }
+    function showCard(){
+      card.textContent=''; var t=mapSel?cityOf(mapSel):null;
+      if(!t){ card.hidden=true; return; }
+      var c=countryOf(t.cid)||{name:''}, n=(t.photos||[]).length, th=h('div',{class:'th'},pic(coverOf(t),null,false));
+      card.hidden=false;
+      card.appendChild(th);
+      card.appendChild(h('div',{class:'grow'},h('b',{class:'cname'},t.name),h('div',{class:'sci'},fl(c.name)+c.name+(n?' · '+plural(n,'photo','photos'):''))));
+      card.appendChild(h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(t.cid)+'/'+encodeURIComponent(t.id)); }}},'Open'));
+      card.appendChild(h('button',{class:'btn quiet sm',type:'button','aria-label':'Close',on:{click:function(){ select('',false); }}},'×'));
+    }
+
+    /* search your own cities */
+    var inp=h('input',{class:'mf-search',type:'search',placeholder:'Search your cities','aria-label':'Search your cities',autocomplete:'off'}), res=h('div',{class:'mf-res'});
+    res.hidden=true;
+    inp.addEventListener('input',function(){
+      var q=inp.value.trim().toLowerCase(); res.textContent=''; if(!q){ res.hidden=true; return; }
+      var m=cities.filter(function(t){ var c=countryOf(t.cid)||{name:''}; return t.name.toLowerCase().indexOf(q)>=0||c.name.toLowerCase().indexOf(q)>=0; }).slice(0,6);
+      if(!m.length){ res.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'No city found.')); res.hidden=false; return; }
+      m.forEach(function(t){
+        var c=countryOf(t.cid)||{name:''};
+        res.appendChild(h('button',{type:'button',on:{click:function(){
+          res.hidden=true; inp.value='';
+          if(typeof t.lat==='number') select(t.id,true); else say(t.name+' is not on the map yet. Tap "not on the map" to place it.');
+        }}},h('b',null,t.name),h('span',{class:'sci'},fl(c.name)+c.name)));
+      });
+      res.hidden=false;
+    });
+    top.appendChild(inp); top.appendChild(res);
+    var chip=h('button',{class:'mf-chip',type:'button',on:{click:function(){ unplacedSheet(); }}},''); chip.hidden=true; top.appendChild(chip);
+
+    /* cities the lookup could not place: retry or place by hand */
+    function unplacedSheet(){
+      var p=$('#panel'); p.textContent=''; p.appendChild(h('h2',null,'Not on the map'));
+      var un=cities.filter(function(t){ return typeof t.lat!=='number'; });
+      if(!un.length) p.appendChild(h('p',{class:'note'},'Every city has a pin.'));
+      un.forEach(function(t){
+        var c=countryOf(t.cid)||{name:''};
+        p.appendChild(h('div',{class:'pl'},h('div',{class:'grow'},h('b',null,t.name),h('div',{class:'sci'},fl(c.name)+c.name)),
+          h('button',{class:'btn sm',type:'button',on:{click:function(){ closeSheet(); startPlacing(t); }}},'Place')));
+      });
+      p.appendChild(h('div',{class:'btnrow'},
+        h('button',{class:'btn solid',type:'button',on:{click:function(){ cities.forEach(function(t){ if(typeof t.lat!=='number') delete t.geo; }); closeSheet(); say('Looking up the cities again…'); geocodeAll().then(function(){ refresh(); say('Done.'); }); }}},'Try again'),
+        h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Close')));
+      openSheet();
+    }
+    function startPlacing(t){
+      mapPlacing=t; select('',false);
+      banner.textContent=''; banner.hidden=false;
+      banner.appendChild(h('span',null,'Tap the map where '+t.name+' is'));
+      banner.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ mapPlacing=null; banner.hidden=true; }}},'Cancel'));
+      map.getCanvas().style.cursor='crosshair';
+    }
+
+    map.on('load',function(){
+      map.addSource('pins',{type:'geojson',data:geo(),cluster:true,clusterRadius:42,clusterMaxZoom:9});
+      map.addLayer({id:'cl',type:'circle',source:'pins',filter:['has','point_count'],paint:{'circle-color':'#1F1C18','circle-radius':['step',['get','point_count'],15,5,18,15,22],'circle-stroke-color':'#FAF7F2','circle-stroke-width':2.5}});
+      map.addLayer({id:'cl-n',type:'symbol',source:'pins',filter:['has','point_count'],layout:{'text-field':['get','point_count_abbreviated'],'text-font':['Noto Sans Bold'],'text-size':13,'text-allow-overlap':true},paint:{'text-color':'#FAF7F2'}});
+      map.addLayer({id:'pt',type:'circle',source:'pins',filter:['!',['has','point_count']],paint:{'circle-color':'#A98C55','circle-radius':6,'circle-stroke-color':'#FAF7F2','circle-stroke-width':2}});
+      map.addLayer({id:'pt-sel',type:'circle',source:'pins',filter:['all',['!',['has','point_count']],['==',['get','id'],mapSel]],paint:{'circle-color':'rgba(0,0,0,0)','circle-radius':12,'circle-stroke-color':'#1F1C18','circle-stroke-width':2}});
+      map.addLayer({id:'pt-l',type:'symbol',source:'pins',minzoom:3,filter:['!',['has','point_count']],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':12,'text-anchor':'top','text-offset':[0,0.9],'text-optional':true},paint:{'text-color':'#1F1C18','text-halo-color':'#FAF7F2','text-halo-width':1.6}});
+      if(mapSel) select(mapSel,false);
+      refresh();
+    });
+    map.on('click',function(e){
+      if(mapPlacing){
+        var t=mapPlacing; mapPlacing=null; banner.hidden=true; map.getCanvas().style.cursor='';
+        t.lat=e.lngLat.lat; t.lng=e.lngLat.lng; delete t.geo;
+        saveData().then(function(){ refresh(); select(t.id,false); });
+        return;
       }
-      function draw(){
-        markers.clearLayers();
-        list().forEach(function(t){
-          var m=L.marker([t.lat,t.lng],{icon:L.divIcon({className:'pin'+(t===sel?' on':''),html:'<span></span>',iconSize:[26,26],iconAnchor:[13,13]}),title:t.name});
-          m.bindTooltip(t.name,{direction:'top',offset:[0,-12]});
-          m.on('click',function(){ sel=t; showInfo(); draw(); });
-          m.addTo(markers);
-        });
-      }
-      function fit(){
-        var ps=list().map(function(t){ return [t.lat,t.lng]; });
-        if(!ps.length) map.setView([20,0],2); else if(ps.length===1) map.setView(ps[0],7); else map.fitBounds(L.latLngBounds(ps),{padding:[40,40],maxZoom:8});
-      }
-      btns.appendChild(h('button',{class:'btn sm',type:'button',on:{click:fit}},'Show all pins'));
-      mapRedraw=function(){ if(!box.isConnected) return; fit(); draw(); };
-      fit(); draw(); setTimeout(function(){ map.invalidateSize(); },150);
-      if(cities.some(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; })){
-        note.textContent='Placing pins from the city names\u2026 this needs an internet connection.';
-        geocodeAll().then(function(){ if(note.isConnected&&/^Placing/.test(note.textContent)) note.textContent=''; });
-      } else if(!cities.length) note.textContent='Add a city to see its pin here.';
-    }).catch(function(){ if(g.isConnected){ v.removeChild(g); renderMapSvg(v); } });
+      res.hidden=true;
+      var bb=[[e.point.x-14,e.point.y-14],[e.point.x+14,e.point.y+14]], fs=map.getLayer('cl')?map.queryRenderedFeatures(bb,{layers:['cl','pt']}):[];
+      if(!fs.length){ if(mapSel) select('',false); return; }
+      var f=fs[0];
+      if(f.properties&&f.properties.cluster_id!==undefined){
+        var src=map.getSource('pins'), z=src.getClusterExpansionZoom(f.properties.cluster_id);
+        var go2=function(zoom){ map.easeTo({center:f.geometry.coordinates,zoom:zoom+0.2,duration:600}); };
+        if(z&&z.then) z.then(go2); else src.getClusterExpansionZoom(f.properties.cluster_id,function(err,zz){ if(!err) go2(zz); });
+      } else select(f.properties.id,true);
+    });
+    map.on('mousemove',function(e){ if(mapPlacing||!map.getLayer('cl')) return; var fs=map.queryRenderedFeatures(e.point,{layers:['cl','pt']}); map.getCanvas().style.cursor=fs.length?'pointer':''; });
+    mapRedraw=function(){ if(mapInst) refresh(); };
+
+    if(!mapView) fitAll(false);
+    showCard();
+    if(cities.some(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; })){
+      geocodeAll().then(function(){ if(mapInst){ refresh(); if(!mapView) fitAll(true); } });
+    }
   }
   function renderMapSvg(v){
     var g=h('div',{class:'gallery'}), note=h('p',{class:'note'},''), box=h('div',{class:'mapbox'}), info=h('div');
@@ -2237,6 +2379,7 @@ window.qrcode=function(type,ecl){
       if(!ready) return;
       state.c=state.t=null; c=t=null; if(location.hash) history.replaceState(null,'',location.pathname+location.search);
     }
+    if(!state.map) destroyMap();
     var v=$('#view'); v.textContent='';
     $('#tools').hidden=!!c||state.map;
     $('#tab-index').setAttribute('aria-pressed',String(!c&&!state.map)); $('#tab-map').setAttribute('aria-pressed',String(!!state.map));
