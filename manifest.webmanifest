@@ -1,7 +1,7 @@
 {
   "id": "/my-trips/atlas-v2",
-  "name": "Trip Atlas",
-  "short_name": "Atlas",
+  "name": "Travel",
+  "short_name": "Travel",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
