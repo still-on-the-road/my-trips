@@ -207,6 +207,7 @@ body.mapmode{padding:0}
 .mf-chip{margin-top:8px;background:var(--btn);color:var(--on-btn);border:0;padding:9px 14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 2px 8px rgba(31,28,24,.3)}
 .mf-card{position:absolute;left:10px;right:10px;bottom:30px;z-index:2;background:var(--paper);border:1px solid var(--gold);box-shadow:0 6px 20px rgba(31,28,24,.3);display:flex;gap:12px;padding:10px;align-items:center}
 .mf-card .th{width:52px;flex:none}
+.mf-act{display:flex;flex-direction:column;gap:6px;flex:none}
 .mf-card .grow{flex:1;min-width:0}
 .mf-banner{position:absolute;left:10px;right:10px;bottom:30px;z-index:3;background:var(--btn);color:var(--on-btn);display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;font-weight:700;font-size:14px}
 .maplibregl-ctrl-group{border-radius:0!important;box-shadow:0 2px 8px rgba(31,28,24,.25)!important}
@@ -1954,7 +1955,9 @@ window.qrcode=function(type,ecl){
       card.hidden=false;
       card.appendChild(th);
       card.appendChild(h('div',{class:'grow'},h('b',{class:'cname'},t.name),h('div',{class:'sci'},fl(c.name)+c.name+(n?' · '+plural(n,'photo','photos'):''))));
-      card.appendChild(h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(t.cid)+'/'+encodeURIComponent(t.id)); }}},'Open'));
+      card.appendChild(h('div',{class:'mf-act'},
+        h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(t.cid)+'/'+encodeURIComponent(t.id)); }}},'Open'),
+        h('a',{class:'btn sm',href:mapsUrl(t,c),target:'_blank',rel:'noopener',style:'display:flex;align-items:center;justify-content:center;text-decoration:none'},'Google Maps')));
       card.appendChild(h('button',{class:'btn quiet sm',type:'button','aria-label':'Close',on:{click:function(){ select('',false); }}},'×'));
     }
 
@@ -2284,6 +2287,10 @@ window.qrcode=function(type,ecl){
     v.appendChild(g);
   }
 
+  function mapsUrl(t,c){
+    var q=(typeof t.lat==='number'&&typeof t.lng==='number')?t.lat+','+t.lng:encodeURIComponent(t.name+', '+((c&&c.name)||''));
+    return 'https://www.google.com/maps/search/?api=1&query='+q;
+  }
   function renderCity(v,c,t){
     var pics=t.photos||[];
     var targets=pics.map(function(p){return {t:t,p:p}});
@@ -2293,6 +2300,7 @@ window.qrcode=function(type,ecl){
     g.appendChild(h('a',{class:'back',href:backHref},'\u2190 '+c.name));
     g.appendChild(h('div',null,h('h2',{class:'gtitle'},t.name),h('div',{class:'sci'},fl(c.name)+c.name)));
     g.appendChild(h('p',{class:'note'},plural(pics.length,'photo','photos')));
+    g.appendChild(h('div',{class:'btnrow'},h('a',{class:'btn',href:mapsUrl(t,c),target:'_blank',rel:'noopener',style:'display:flex;align-items:center;justify-content:center;text-decoration:none'},'Open in Google Maps')));
     if(t.sample){
       g.appendChild(h('p',{class:'note'},'This is a sample entry. It disappears when you add your first country.'));
     } else {
@@ -2309,6 +2317,11 @@ window.qrcode=function(type,ecl){
         h('button',{class:'btn',type:'button',on:{click:function(){
           openRename('Rename city',t.name,function(val){ t.name=val; return saveData(); });
         }}},'Rename')));
+      g.appendChild(confirmRow('Delete city','Yes, delete '+t.name,function(){
+        var jobs=(t.photos||[]).map(function(p){ photoCache[p.id]=null; return drop('photo:'+p.id); });
+        cities=cities.filter(function(x){return x.id!==t.id});
+        Promise.all(jobs).then(saveData).then(function(){ go(backHref); });
+      }));
     }
 
     g.appendChild(sec('About this place'));
@@ -2357,13 +2370,6 @@ window.qrcode=function(type,ecl){
     });
     g.appendChild(gal);
 
-    if(!t.sample){
-      g.appendChild(confirmRow('Delete city','Yes, delete '+t.name,function(){
-        var jobs=(t.photos||[]).map(function(p){ photoCache[p.id]=null; return drop('photo:'+p.id); });
-        cities=cities.filter(function(x){return x.id!==t.id});
-        Promise.all(jobs).then(saveData).then(function(){ go(backHref); });
-      }));
-    }
     g.appendChild(h('a',{class:'back',href:backHref},'\u2190 '+c.name));
     v.appendChild(g);
   }
