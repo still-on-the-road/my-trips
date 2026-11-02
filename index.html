@@ -198,7 +198,7 @@ textarea.notes{min-height:160px}
 body.mapmode .app{display:none}
 body.mapmode{padding:0}
 #mapfull{position:fixed;left:0;right:0;top:0;z-index:5;background:#E9E5DC}
-.mf-map{position:absolute;inset:0}
+#mapfull .mf-map{position:absolute;inset:0;width:100%;height:100%}
 .mf-top{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;right:58px;z-index:2}
 .mf-search{width:100%;border:1px solid var(--gold);background:var(--paper);padding:0 14px;min-height:46px;font-size:16px;box-shadow:0 2px 10px rgba(31,28,24,.2)}
 .mf-search::placeholder{color:var(--muted);font-family:var(--serif);font-style:italic}
@@ -2000,7 +2000,10 @@ window.qrcode=function(type,ecl){
       map.getCanvas().style.cursor='crosshair';
     }
 
+    var mapLoaded=false;
+    map.on('error',function(e){ if(!mapLoaded){ var m=(e&&e.error&&e.error.message)||'unknown'; say('Map problem: '+m); } });
     map.on('load',function(){
+      mapLoaded=true;
       map.addSource('pins',{type:'geojson',data:geo(),cluster:true,clusterRadius:42,clusterMaxZoom:9});
       map.addLayer({id:'cl',type:'circle',source:'pins',filter:['has','point_count'],paint:{'circle-color':'#1F1C18','circle-radius':['step',['get','point_count'],15,5,18,15,22],'circle-stroke-color':'#FAF7F2','circle-stroke-width':2.5}});
       map.addLayer({id:'cl-n',type:'symbol',source:'pins',filter:['has','point_count'],layout:{'text-field':['get','point_count_abbreviated'],'text-font':['Noto Sans Bold'],'text-size':13,'text-allow-overlap':true},paint:{'text-color':'#FAF7F2'}});
