@@ -1,0 +1,2615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F1EBE1">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Travel">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="atlas-192.png">
+<link rel="apple-touch-icon" href="atlas-192.png">
+<title>Travel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout (same as Wildlife Journal): a cream page inside a double gold frame, centred logo and title, a diamond divider, a photo grid, and a black bottom bar with the four actions. */
+:root{
+  --bg:#F1EBE1; --paper:#FAF7F2; --ink:#1F1C18; --muted:#6B6256; --gold:#A98C55; --line:#E2D8C6; --tint:#EFE7DA;
+  --btn:#1F1C18; --on-btn:#FAF7F2; --scrim:rgba(31,28,24,.5); --danger:#9C3A2B;
+  --sans:'Lato','Avenir Next','Segoe UI',sans-serif;
+  --serif:'Lora',Georgia,'Times New Roman',serif;
+  --icon:url("atlas-192.png");
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.45;
+  padding-block:12px 96px;
+  padding-left:max(10px, env(safe-area-inset-left,0px));
+  padding-right:max(10px, env(safe-area-inset-right,0px));
+}
+button,input{font:inherit; color:inherit; border-radius:0}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.label{font-family:var(--sans); font-size:12px; letter-spacing:.16em; text-transform:uppercase; font-weight:700}
+
+/* framed page */
+.app{
+  position:relative; max-width:640px; margin:0 auto; background:var(--paper); border:1px solid var(--gold);
+  padding:34px 24px 30px; display:flex; flex-direction:column; gap:22px;
+}
+.app::before{content:""; position:absolute; inset:6px; border:1px solid var(--gold); pointer-events:none}
+
+/* header */
+.top{display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center}
+.logo{
+  width:92px; height:92px; border-radius:50%; background:var(--icon) center/cover no-repeat, #FBF2E9;
+  box-shadow:0 0 0 3px var(--paper), 0 0 0 4px var(--gold); margin:4px 0 6px;
+}
+h1{font-family:var(--sans); font-weight:700; font-size:14px; line-height:1.2; letter-spacing:.3em; text-transform:uppercase; color:var(--gold); margin:0; text-wrap:balance}
+.counts{font-family:var(--serif); font-style:normal; font-weight:400; color:var(--ink); margin:0; font-size:44px; line-height:1.1; font-variant-numeric:tabular-nums}
+.subcounts{font-family:var(--serif); font-style:italic; color:var(--muted); margin:0; font-size:20px}
+.divider{display:flex; align-items:center; justify-content:center; gap:14px; width:100%; max-width:300px; color:var(--gold)}
+.divider::before,.divider::after{content:""; flex:1; height:1px; background:var(--gold)}
+.divider i{display:block; width:9px; height:9px; background:var(--gold); transform:rotate(45deg)}
+.heading{font-family:var(--sans); font-weight:700; font-size:14px; letter-spacing:.3em; text-transform:uppercase; color:var(--gold); text-align:center; margin:0}
+.section{display:flex; flex-direction:column; align-items:center; gap:12px}
+
+/* notice */
+.notice{border:1px solid var(--line); background:var(--tint); padding:12px 14px; font-family:var(--serif); font-style:italic; color:var(--muted); font-size:16px}
+.notice b{color:var(--ink); font-weight:600; font-style:normal}
+#toast{position:fixed; left:50%; transform:translateX(-50%); bottom:84px; width:max-content; max-width:88%; background:#1F1C18; color:#FAF7F2; padding:11px 18px; font:700 13px/1.4 Lato,'Segoe UI',sans-serif; letter-spacing:.04em; text-align:center; z-index:99; box-shadow:0 4px 16px rgba(0,0,0,.25)}
+
+/* tools */
+.tools{display:flex; flex-direction:column; gap:12px}
+.search{width:100%; border:1px solid var(--gold); background:var(--paper); padding:12px 14px; min-height:48px; font-size:16px}
+.search::placeholder{color:var(--muted); font-family:var(--serif); font-style:italic}
+.chips{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch}
+.chip{flex:none; border:1px solid var(--ink); background:transparent; padding:8px 14px; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; min-height:38px}
+.chip[aria-pressed="true"]{background:var(--btn); border-color:var(--btn); color:var(--on-btn)}
+
+/* buttons */
+.btn{
+  font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+  border:1px solid var(--ink); background:transparent; color:var(--ink); padding:14px 18px; min-height:48px; text-align:center;
+}
+.btn.solid{background:var(--btn); color:var(--on-btn)}
+.btn.quiet{border-color:var(--line); color:var(--muted)}
+.btn.danger{border-color:var(--danger); color:var(--danger)}
+
+/* grid */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:22px 14px}
+.card{background:none; border:0; padding:0; text-align:left; display:flex; flex-direction:column; gap:6px; min-width:0}
+.ph{
+  position:relative; aspect-ratio:4/5; width:100%; max-width:100%; overflow:hidden;
+  background:var(--icon) center/58% no-repeat, #FBF2E9; box-shadow:inset 0 0 0 1px var(--line);
+}
+.ph img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block}
+.tag{position:absolute; left:8px; top:8px; background:var(--paper); color:var(--ink); padding:2px 9px}
+.cname{font-weight:700; font-size:13px; letter-spacing:.08em; text-transform:uppercase; line-height:1.3; overflow-wrap:anywhere; margin-top:4px}
+.sci{font-family:var(--serif); font-style:italic; color:var(--muted); font-size:16px; line-height:1.25; overflow-wrap:anywhere}
+.meta{color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; line-height:1.35}
+.more{align-self:center}
+.empty{color:var(--muted); padding:28px 0; text-align:center; font-family:var(--serif); font-style:italic}
+
+/* species list */
+.list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.row{display:flex; align-items:center; gap:14px; padding:14px 0; border:0; border-bottom:1px solid var(--line); width:100%; background:none; text-align:left}
+.row .grow{flex:1; min-width:0}
+.row .n{font-weight:700; font-size:22px; font-variant-numeric:tabular-nums; color:var(--gold)}
+
+/* bottom bar */
+.bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:10; background:var(--btn); color:var(--on-btn);
+  display:flex; padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px); padding-right:env(safe-area-inset-right,0px);
+}
+.navb{flex:1; min-width:0; background:none; border:0; border-bottom:3px solid transparent; color:inherit; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; padding:20px 4px 17px; opacity:.8}
+.navb[aria-pressed="true"]{opacity:1; border-bottom-color:var(--gold)}
+
+/* sheet */
+.overlay{position:fixed; inset:0; background:var(--scrim); display:flex; align-items:flex-end; justify-content:center; z-index:20}
+.panel{
+  background:var(--paper); border-top:2px solid var(--gold); width:100%; max-width:560px; max-height:92%; overflow-y:auto;
+  padding-top:22px; padding-bottom:calc(26px + env(safe-area-inset-bottom,0px));
+  padding-left:max(22px, env(safe-area-inset-left,0px)); padding-right:max(22px, env(safe-area-inset-right,0px));
+  display:flex; flex-direction:column; gap:16px;
+}
+@media (min-width:640px){ .overlay{align-items:center} .panel{max-height:88%; border:1px solid var(--gold)} }
+.panel .ph{aspect-ratio:4/3; background-size:34%}
+.panel h2{font-family:var(--sans); font-size:18px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; line-height:1.3; margin:0; text-wrap:balance}
+.panel .sci{font-size:18px}
+.panel dl{margin:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:14px 0}
+.panel dt{font-family:var(--serif); font-style:italic; font-size:18px; letter-spacing:0; text-transform:none; font-weight:400; color:var(--muted); text-align:right; padding-right:18px}
+.panel dd{margin:0; min-width:0; overflow-wrap:anywhere; border-left:1px solid var(--gold); padding-left:18px}
+.panel .btnrow{display:flex; gap:8px; flex-wrap:wrap}
+.panel .btnrow .btn{flex:1 1 140px}
+.panel a{color:var(--ink); text-decoration:underline; text-decoration-color:var(--gold); text-underline-offset:4px; font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; align-self:center; padding:0 6px}
+.field{display:flex; flex-direction:column; gap:6px}
+.field input{border:1px solid var(--gold); background:var(--paper); padding:11px 12px; min-height:48px; width:100%}
+.note{color:var(--muted); font-family:var(--serif); font-style:italic; margin:0}
+input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
+@media (prefers-reduced-motion:no-preference){ .card:hover .ph{filter:brightness(1.04)} }
+/* detail sheet headings */
+.sec{display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:4px}
+.sec .gold{color:var(--gold); letter-spacing:.3em}
+.sec .div{display:flex; align-items:center; justify-content:center; gap:14px; width:100%; max-width:260px}
+.sec .div::before,.sec .div::after{content:""; flex:1; height:1px; background:var(--gold)}
+.sec .div i{display:block; width:8px; height:8px; background:var(--gold); transform:rotate(45deg)}
+.pill{display:inline-block; border:1px solid var(--gold); padding:2px 10px; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase}
+/* species gallery */
+.gal{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 12px}
+.gitem{display:flex; flex-direction:column; gap:6px; min-width:0}
+.gitem .ph{aspect-ratio:1/1}
+.gact{display:flex; flex-direction:column; gap:6px}
+.btn.sm{min-height:40px; padding:10px 12px}
+.panel .list{margin:0}
+/* zoom and crop */
+.ph.zoomable{cursor:zoom-in}
+.gitem .ph{aspect-ratio:4/5}
+.panel > .ph{aspect-ratio:4/5; width:min(100%,320px); align-self:center; background-size:40%}
+.gact{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.gact.stack{grid-template-columns:1fr}
+.gact .btn{padding:10px 4px; letter-spacing:.1em}
+.cropframe{position:relative; aspect-ratio:4/5; width:min(100%,320px); align-self:center; overflow:hidden; background:#FBF2E9; box-shadow:inset 0 0 0 1px var(--gold); touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none}
+.cropframe.grab{cursor:grabbing}
+.cropframe img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none; display:block}
+.field input[type=range]{padding:0; min-height:36px; border:0; background:none; accent-color:var(--gold)}
+.lb{position:fixed; inset:0; z-index:30; background:rgba(8,7,6,.96); display:flex; flex-direction:column}
+.lbscroll{flex:1; min-height:0; overflow:auto; display:flex; padding:12px; -webkit-overflow-scrolling:touch}
+.lbscroll img{margin:auto; max-width:100%; max-height:100%; object-fit:contain; cursor:zoom-in; display:block}
+.lb.zoomed .lbscroll img{max-width:none; max-height:none; width:260%; cursor:zoom-out}
+.lbbar{display:flex; gap:8px; padding:12px; padding-bottom:calc(12px + env(safe-area-inset-bottom,0px)); padding-left:max(12px,env(safe-area-inset-left,0px)); padding-right:max(12px,env(safe-area-inset-right,0px))}
+.lbbar .btn{flex:1; border-color:#F3EADF; color:#F3EADF}
+.lbbar .btn.solid{background:#F3EADF; color:#1A1815}
+/* index + species gallery page */
+.back{display:inline-block; align-self:flex-start; color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; text-decoration:underline; text-decoration-color:var(--gold); text-underline-offset:5px; padding:12px 0; min-height:44px}
+.gallery{display:flex; flex-direction:column; gap:16px}
+.gallery .btnrow{display:flex; gap:8px; flex-wrap:wrap}
+.gallery .btnrow .btn{flex:1 1 140px}
+.gtitle{font-family:var(--sans); font-size:20px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; line-height:1.3; margin:0 0 4px; text-wrap:balance}
+.row .chev{color:var(--gold); font-size:24px; line-height:1}
+.row:hover .cname{text-decoration:underline; text-decoration-color:var(--gold); text-underline-offset:4px}
+/* letters, counts, notes, viewer arrows */
+.letter{list-style:none; font-family:var(--sans); font-weight:700; font-size:14px; letter-spacing:.3em; color:var(--gold); padding:20px 0 6px; border-bottom:1px solid var(--gold)}
+.letter:first-child{padding-top:0}
+.row .cnt{white-space:nowrap; font-size:12px; letter-spacing:.04em}
+.row .cnt.none{opacity:.7; font-style:italic}
+textarea.notes{width:100%; min-height:120px; border:1px solid var(--gold); background:var(--paper); padding:12px 14px; font-family:var(--serif); font-size:16px; line-height:1.5; resize:vertical; color:var(--ink); border-radius:0}
+textarea.notes::placeholder{color:var(--muted); font-style:italic}
+.lbcount{position:absolute; top:max(14px,env(safe-area-inset-top,0px)); left:0; right:0; text-align:center; color:#F3EADF; font-size:13px; letter-spacing:.16em; pointer-events:none; text-shadow:0 1px 3px #000}
+.lbbar .btn.nav{flex:0 0 52px; padding-left:0; padding-right:0; font-size:22px; letter-spacing:0; line-height:1}
+/* reference look: light, airy rows */
+.list .row{padding:20px 0}
+.list .cname{font-size:20px; font-weight:400; letter-spacing:0; text-transform:none; margin-top:0; line-height:1.25}
+.list .sci{font-size:16px; margin-top:2px}
+.row .cnt{background:var(--gold); color:#FAF7F2; border-radius:999px; padding:3px 11px; font-weight:700; font-size:12px; letter-spacing:.06em}
+.row .cnt.none{background:none; color:var(--muted); font-weight:400; opacity:1; padding:0}
+.letter{margin-top:6px}
+/* Travel additions */
+.cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:22px 14px}
+textarea.notes{min-height:160px}
+.field textarea.notes{min-height:90px}
+.field select{border:1px solid var(--gold); background:var(--paper); padding:11px 12px; min-height:48px; width:100%}
+.panel .btnrow.center{justify-content:center}
+.mapbox{position:relative;height:60vh;min-height:300px;border:1px solid #A98C55;background:#E4ECEB;overflow:hidden;touch-action:none}
+body.mapmode .app{display:none}
+body.mapmode{padding:0}
+#mapfull{position:fixed;left:0;right:0;top:0;z-index:5;background:#E9E5DC}
+#mapfull .mf-map{position:absolute;inset:0;width:100%;height:100%}
+.mf-top{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;right:58px;z-index:2}
+.mf-search{width:100%;border:1px solid var(--gold);background:var(--paper);padding:0 14px;min-height:46px;font-size:16px;box-shadow:0 2px 10px rgba(31,28,24,.2)}
+.mf-search::placeholder{color:var(--muted);font-family:var(--serif);font-style:italic}
+.mf-res{background:var(--paper);border:1px solid var(--gold);border-top:0;box-shadow:0 6px 16px rgba(31,28,24,.22);max-height:42vh;overflow:auto}
+.mf-res button{display:flex;width:100%;gap:10px;align-items:baseline;padding:13px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font-size:15px}
+.mf-chip{margin-top:8px;background:var(--btn);color:var(--on-btn);border:0;padding:9px 14px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 2px 8px rgba(31,28,24,.3)}
+.mf-card{position:absolute;left:10px;right:10px;bottom:30px;z-index:2;background:var(--paper);border:1px solid var(--gold);box-shadow:0 6px 20px rgba(31,28,24,.3);display:flex;gap:12px;padding:10px;align-items:center}
+.mf-card .th{width:52px;flex:none}
+.mf-act{display:flex;flex-direction:column;gap:6px;flex:none}
+.mf-card .grow{flex:1;min-width:0}
+.mf-banner{position:absolute;left:10px;right:10px;bottom:30px;z-index:3;background:var(--btn);color:var(--on-btn);display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;font-weight:700;font-size:14px}
+.maplibregl-ctrl-group{border-radius:0!important;box-shadow:0 2px 8px rgba(31,28,24,.25)!important}
+.maplibregl-ctrl-top-right{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
+.maplibregl-ctrl-attrib{font-size:10px}
+.mapbtns{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
+.mapcard{display:flex;gap:10px;align-items:center;padding:12px 0}
+.pl{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(169,140,85,.35)}
+.pl .grow{min-width:0}
+input.cap{width:100%;font-size:14px;padding:8px 10px;margin:4px 0}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="logo" role="img" aria-label="Travel logo"></div>
+    <h1>Travel</h1>
+    <p class="counts" id="counts"></p>
+    <p class="subcounts" id="subcounts"></p>
+    <div class="divider" aria-hidden="true"><i></i></div>
+  </header>
+
+  <div class="notice" id="notice" role="status" hidden></div>
+
+  <div class="tools" id="tools">
+    <input class="search" id="q" type="search" placeholder="Search a country or a city" aria-label="Search">
+  </div>
+
+  <main id="view"></main>
+</div>
+
+<nav class="bar" aria-label="Main">
+  <button class="navb" id="tab-index" type="button" aria-pressed="true">Index</button>
+  <button class="navb" id="tab-map" type="button" aria-pressed="false">Map</button>
+  <button class="navb" id="add" type="button">Add</button>
+</nav>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Picture">
+  <div class="lbcount" id="lbcount" aria-live="polite"></div>
+  <div class="lbscroll" id="lbscroll"><img id="lbimg" alt=""></div>
+  <div class="lbbar">
+    <button class="btn nav" id="lbprev" type="button" aria-label="Previous picture" hidden>&#8249;</button>
+    <button class="btn" id="lbzoom" type="button">Zoom</button>
+    <button class="btn" id="lbcrop" type="button">Crop</button>
+    <button class="btn nav" id="lbnext" type="button" aria-label="Next picture" hidden>&#8250;</button>
+    <button class="btn solid" id="lbclose" type="button">Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="panel" id="panel" role="dialog" aria-modal="true" aria-label="Details"></div>
+</div>
+
+<script>
+/* Embedded QR encoder: Kazuhiko Arase's QRCode for JavaScript, MIT license (http://www.d-project.com/). QR Code is a registered trademark of DENSO WAVE INCORPORATED. */
+(function(){var M={},C={};
+M['QRMode']=function(module,exports,require){
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+};
+M['QRErrorCorrectLevel']=function(module,exports,require){
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+
+};
+M['QRMaskPattern']=function(module,exports,require){
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+};
+M['QRMath']=function(module,exports,require){
+var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;
+
+};
+M['QRPolynomial']=function(module,exports,require){
+var QRMath = require('./QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+	
+		// recursive call
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;
+
+};
+M['QRUtil']=function(module,exports,require){
+var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+            // 1 - 9
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+            // 10 - 26
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+            // 27 - 40
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        // LEVEL1
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+        // LEVEL2
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+        // LEVEL3
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        // LEVEL4
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;
+
+};
+M['QRRSBlock']=function(module,exports,require){
+var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+	// L
+	// M
+	// Q
+	// H
+
+	// 1
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	
+	// 2
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	// 3
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	// 4		
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	
+	// 5
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	
+	// 6
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	
+	// 7		
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	
+	// 8
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	
+	// 9
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	
+	// 10		
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	// 11
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	// 12
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	// 13
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	// 14
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	// 15
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	// 16
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	// 17
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	// 18
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	// 19
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	// 20
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	// 21
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	// 22
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	// 23
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	// 24
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	// 25
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	// 26
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	// 27
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	// 28
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	// 29
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	// 30
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	// 31
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	// 32
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	// 33
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	// 34
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	// 35
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	// 36
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	// 37
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	// 38
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	// 39
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	// 40
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;
+
+};
+M['QRBitBuffer']=function(module,exports,require){
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;
+
+};
+M['QR8bitByte']=function(module,exports,require){
+var QRMode = require('./QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+
+QR8bitByte.prototype = {
+
+	getLength : function() {
+		return this.data.length;
+	},
+	
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			// not JIS ...
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+
+module.exports = QR8bitByte;
+
+};
+M['index']=function(module,exports,require){
+//---------------------------------------------------------------------
+// QRCode for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//   http://www.opensource.org/licenses/mit-license.php
+//
+// The word "QR Code" is registered trademark of 
+// DENSO WAVE INCORPORATED
+//   http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+// Modified to work in node for this project (and some refactoring)
+//---------------------------------------------------------------------
+
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+		// Calculate automatically typeNumber if provided is < 1
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+	
+		// vertical		
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+	
+		// horizontal
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+	
+		// fixed module
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	// calc num max data.
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	// end code
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	// padding
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	// padding
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;
+
+};
+
+function R(n){n=n.replace('./','');if(!C[n]){var m={exports:{}};C[n]=m.exports;M[n](m,m.exports,R);C[n]=m.exports}return C[n]}
+window.qrcode=function(type,ecl){
+  var QRCode=R('index'),L=R('QRErrorCorrectLevel'),data=[],q=null;
+  return {
+    addData:function(d){data.push(d)},
+    make:function(){
+      for(var t=Math.max(1,type||1);t<=40;t++){
+        try{var x=new QRCode(t,L[ecl||'M']);data.forEach(function(d){x.addData(d)});x.make();q=x;return}catch(e){}
+      }
+      throw new Error('QR data too long');
+    },
+    getModuleCount:function(){return q.getModuleCount()},
+    isDark:function(r,c){return q.isDark(r,c)},
+    createDataURL:function(cell,margin){
+      cell=cell||4;margin=margin==null?cell*4:margin;var n=q.getModuleCount(),s=n*cell+margin*2,cv=document.createElement('canvas');cv.width=cv.height=s;
+      var g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,s,s);g.fillStyle='#000';
+      for(var r=0;r<n;r++)for(var c=0;c<n;c++)if(q.isDark(r,c))g.fillRect(margin+c*cell,margin+r*cell,cell,cell);
+      return cv.toDataURL('image/png');
+    }
+  };
+};
+})();
+</script>
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var countries=[], cities=[], isSample=false, photoCache={}, ready=false;
+  var state={q:'',c:null,t:null,sort:'az',map:false}, lastBackup='', sy={url:'',key:'',last:''}, tomb={}, lastJ={}, syncing=false;
+
+  /* sample entries, shown until the first real one is added */
+  var SAMPLE_C=[{id:'s-it',name:'Italy',sample:true},{id:'s-jp',name:'Japan',sample:true},{id:'s-pt',name:'Portugal',sample:true}];
+  var SAMPLE_T=[
+    {id:'s-rome',cid:'s-it',name:'Rome',visited:'2023-05',lat:41.9,lng:12.5,desc:'Ancient ruins, fountains on every corner and long lunches. Easy to cover on foot.',photos:[],sample:true},
+    {id:'s-flo',cid:'s-it',name:'Florence',lat:43.77,lng:11.26,desc:'Renaissance art, the Duomo skyline and sunset over the Arno.',photos:[],sample:true},
+    {id:'s-kyo',cid:'s-jp',name:'Kyoto',lat:35.01,lng:135.77,desc:'Temples, tea houses and quiet lanes in the old town.',photos:[],sample:true},
+    {id:'s-lis',cid:'s-pt',name:'Lisbon',lat:38.72,lng:-9.14,desc:'Hills, yellow trams and pastries at every turn.',photos:[],sample:true}
+  ];
+
+  /* storage: IndexedDB with an in-memory fallback */
+  var memory={}, dbp=null;
+  function db(){
+    if(!dbp) dbp=new Promise(function(res){
+      try{
+        var r=indexedDB.open('travel-journal',1);
+        r.onupgradeneeded=function(){r.result.createObjectStore('kv')};
+        r.onsuccess=function(){res(r.result)};
+        r.onerror=function(){res(null)};
+      }catch(e){res(null)}
+    });
+    return dbp;
+  }
+  function get(k){
+    return db().then(function(d){
+      if(!d) return memory[k];
+      return new Promise(function(res){
+        try{var q=d.transaction('kv').objectStore('kv').get(k); q.onsuccess=function(){res(q.result)}; q.onerror=function(){res(undefined)}}
+        catch(e){res(memory[k])}
+      });
+    });
+  }
+  function put(k,v){
+    memory[k]=v;
+    return db().then(function(d){
+      if(!d) return true;
+      return new Promise(function(res){
+        try{var t=d.transaction('kv','readwrite'); t.objectStore('kv').put(v,k); t.oncomplete=function(){res(true)}; t.onerror=function(){res(false)}; t.onabort=function(){res(false)}}
+        catch(e){res(false)}
+      });
+    });
+  }
+  function drop(k){
+    delete memory[k];
+    return db().then(function(d){
+      if(!d) return;
+      return new Promise(function(res){
+        try{var t=d.transaction('kv','readwrite'); t.objectStore('kv').delete(k); t.oncomplete=res; t.onerror=res; t.onabort=res}
+        catch(e){res()}
+      });
+    });
+  }
+  function initJ(){ lastJ={}; countries.concat(cities).forEach(function(o){ if(o.sample) return; var c=Object.assign({},o); delete c.mod; lastJ[o.id]=JSON.stringify(c); }); }
+  function stamp(){
+    var now=Date.now(), seen={};
+    countries.concat(cities).forEach(function(o){
+      if(o.sample) return; seen[o.id]=1;
+      var c=Object.assign({},o); delete c.mod; var j=JSON.stringify(c);
+      if(lastJ[o.id]!==j){ if(lastJ[o.id]!==undefined||!o.mod) o.mod=now; lastJ[o.id]=j; }
+    });
+    Object.keys(lastJ).forEach(function(id){ if(!seen[id]){ tomb[id]=now; delete lastJ[id]; } });
+  }
+  function persist(){ return put('countries',countries).then(function(){ return put('cities',cities); }).then(function(){ return put('tomb',tomb); }); }
+  function saveData(){ stamp(); return persist(); }
+  function getPhoto(id){
+    if(photoCache[id]!==undefined) return Promise.resolve(photoCache[id]);
+    return get('photo:'+id).then(function(v){photoCache[id]=v||null; return photoCache[id]});
+  }
+
+  /* small DOM helper (text only, never HTML) */
+  function h(tag,attrs){
+    var el=document.createElement(tag);
+    if(attrs) Object.keys(attrs).forEach(function(k){
+      if(k==='class') el.className=attrs[k]; else if(k==='on') Object.keys(attrs.on).forEach(function(e){el.addEventListener(e,attrs.on[e])});
+      else el.setAttribute(k,attrs[k]);
+    });
+    for(var i=2;i<arguments.length;i++){
+      var c=arguments[i]; if(c==null||c===false) continue;
+      el.appendChild(typeof c==='string'?document.createTextNode(c):c);
+    }
+    return el;
+  }
+  function sec(t){ return h('div',{class:'sec'},h('span',{class:'label gold'},t),h('div',{class:'div'},h('i'))); }
+  function uid(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function today(){var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function fmt(d){
+    if(!d) return '';
+    var p=d.split('-'); if(p.length<3) return d;
+    var dt=new Date(+p[0],+p[1]-1,+p[2]);
+    return isNaN(dt)?d:dt.toLocaleDateString('en',{day:'numeric',month:'short',year:'numeric'});
+  }
+  function plural(n,a,b){ return n+' '+(n===1?a:b); }
+  function byName(a,b){ return a.name.localeCompare(b.name,'en',{sensitivity:'base'}); }
+  function countryOf(id){ return countries.filter(function(c){return c.id===id})[0]; }
+  function cityOf(id){ return cities.filter(function(c){return c.id===id})[0]; }
+  function cityList(cid){ return cities.filter(function(x){return x.cid===cid}).sort(byName); }
+  function coverOf(t){
+    var ps=t.photos||[]; if(!ps.length) return null;
+    for(var i=0;i<ps.length;i++) if(ps[i].id===t.cover) return ps[i];
+    return ps[0];
+  }
+  var CC={"ascension island":"AC","andorra":"AD","united arab emirates":"AE","afghanistan":"AF","antigua barbuda":"AG","anguilla":"AI","albania":"AL","armenia":"AM","angola":"AO","antarctica":"AQ","argentina":"AR","american samoa":"AS","austria":"AT","australia":"AU","aruba":"AW","aland islands":"AX","azerbaijan":"AZ","bosnia herzegovina":"BA","barbados":"BB","bangladesh":"BD","belgium":"BE","burkina faso":"BF","bulgaria":"BG","bahrain":"BH","burundi":"BI","benin":"BJ","st barthelemy":"BL","bermuda":"BM","brunei":"BN","bolivia":"BO","caribbean netherlands":"BQ","brazil":"BR","bahamas":"BS","bhutan":"BT","bouvet island":"BV","botswana":"BW","belarus":"BY","belize":"BZ","canada":"CA","cocos keeling islands":"CC","congo kinshasa":"CD","central african republic":"CF","congo brazzaville":"CG","switzerland":"CH","cote d ivoire":"CI","cook islands":"CK","chile":"CL","cameroon":"CM","china":"CN","colombia":"CO","clipperton island":"CP","sark":"CQ","costa rica":"CR","cuba":"CU","cape verde":"CV","curacao":"CW","christmas island":"CX","cyprus":"CY","czechia":"CZ","germany":"DE","diego garcia":"DG","djibouti":"DJ","denmark":"DK","dominica":"DM","dominican republic":"DO","algeria":"DZ","ceuta melilla":"EA","ecuador":"EC","estonia":"EE","egypt":"EG","western sahara":"EH","eritrea":"ER","spain":"ES","ethiopia":"ET","eurozone":"EZ","finland":"FI","fiji":"FJ","falkland islands":"FK","micronesia":"FM","faroe islands":"FO","france":"FR","gabon":"GA","united kingdom":"GB","grenada":"GD","georgia":"GE","french guiana":"GF","guernsey":"GG","ghana":"GH","gibraltar":"GI","greenland":"GL","gambia":"GM","guinea":"GN","guadeloupe":"GP","equatorial guinea":"GQ","greece":"GR","south georgia south sandwich islands":"GS","guatemala":"GT","guam":"GU","guinea bissau":"GW","guyana":"GY","hong kong sar china":"HK","heard mcdonald islands":"HM","honduras":"HN","croatia":"HR","haiti":"HT","hungary":"HU","canary islands":"IC","indonesia":"ID","ireland":"IE","israel":"IL","isle of man":"IM","india":"IN","british indian ocean territory":"IO","iraq":"IQ","iran":"IR","iceland":"IS","italy":"IT","jersey":"JE","jamaica":"JM","jordan":"JO","japan":"JP","kenya":"KE","kyrgyzstan":"KG","cambodia":"KH","kiribati":"KI","comoros":"KM","st kitts nevis":"KN","north korea":"KP","south korea":"KR","kuwait":"KW","cayman islands":"KY","kazakhstan":"KZ","laos":"LA","lebanon":"LB","st lucia":"LC","liechtenstein":"LI","sri lanka":"LK","liberia":"LR","lesotho":"LS","lithuania":"LT","luxembourg":"LU","latvia":"LV","libya":"LY","morocco":"MA","monaco":"MC","moldova":"MD","montenegro":"ME","st martin":"MF","madagascar":"MG","marshall islands":"MH","north macedonia":"MK","mali":"ML","myanmar burma":"MM","mongolia":"MN","macao sar china":"MO","northern mariana islands":"MP","martinique":"MQ","mauritania":"MR","montserrat":"MS","malta":"MT","mauritius":"MU","maldives":"MV","malawi":"MW","mexico":"MX","malaysia":"MY","mozambique":"MZ","namibia":"NA","new caledonia":"NC","niger":"NE","norfolk island":"NF","nigeria":"NG","nicaragua":"NI","netherlands":"NL","norway":"NO","nepal":"NP","nauru":"NR","niue":"NU","new zealand":"NZ","oman":"OM","panama":"PA","peru":"PE","french polynesia":"PF","papua new guinea":"PG","philippines":"PH","pakistan":"PK","poland":"PL","st pierre miquelon":"PM","pitcairn islands":"PN","puerto rico":"PR","palestinian territories":"PS","portugal":"PT","palau":"PW","paraguay":"PY","qatar":"QA","reunion":"RE","romania":"RO","serbia":"RS","russia":"RU","rwanda":"RW","saudi arabia":"SA","solomon islands":"SB","seychelles":"SC","sudan":"SD","sweden":"SE","singapore":"SG","st helena":"SH","slovenia":"SI","svalbard jan mayen":"SJ","slovakia":"SK","sierra leone":"SL","san marino":"SM","senegal":"SN","somalia":"SO","suriname":"SR","south sudan":"SS","sao tome principe":"ST","el salvador":"SV","sint maarten":"SX","syria":"SY","eswatini":"SZ","tristan da cunha":"TA","turks caicos islands":"TC","chad":"TD","french southern territories":"TF","togo":"TG","thailand":"TH","tajikistan":"TJ","tokelau":"TK","timor leste":"TL","turkmenistan":"TM","tunisia":"TN","tonga":"TO","turkiye":"TR","trinidad tobago":"TT","tuvalu":"TV","taiwan":"TW","tanzania":"TZ","ukraine":"UA","uganda":"UG","u s outlying islands":"UM","united states":"US","uruguay":"UY","uzbekistan":"UZ","vatican city":"VA","st vincent grenadines":"VC","venezuela":"VE","british virgin islands":"VG","u s virgin islands":"VI","vietnam":"VN","vanuatu":"VU","wallis futuna":"WF","samoa":"WS","kosovo":"XK","yemen":"YE","mayotte":"YT","south africa":"ZA","zambia":"ZM","zimbabwe":"ZW","isla de la ascension":"AC","emiratos arabes unidos":"AE","afganistan":"AF","antigua y barbuda":"AG","anguila":"AI","antartida":"AQ","samoa americana":"AS","islas aland":"AX","azerbaiyan":"AZ","bosnia y herzegovina":"BA","banglades":"BD","belgica":"BE","barein":"BH","san bartolome":"BL","bermudas":"BM","caribe neerlandes":"BQ","brasil":"BR","butan":"BT","isla bouvet":"BV","botsuana":"BW","bielorrusia":"BY","belice":"BZ","islas cocos":"CC","republica democratica del congo":"CD","republica centroafricana":"CF","congo":"CG","suiza":"CH","islas cook":"CK","camerun":"CM","isla clipperton":"CP","cabo verde":"CV","curazao":"CW","isla de navidad":"CX","chipre":"CY","chequia":"CZ","alemania":"DE","yibuti":"DJ","dinamarca":"DK","republica dominicana":"DO","argelia":"DZ","ceuta y melilla":"EA","egipto":"EG","sahara occidental":"EH","espana":"ES","etiopia":"ET","zona del euro":"EZ","finlandia":"FI","fiyi":"FJ","islas malvinas":"FK","islas feroe":"FO","francia":"FR","reino unido":"GB","granada":"GD","guayana francesa":"GF","guernesey":"GG","groenlandia":"GL","guadalupe":"GP","guinea ecuatorial":"GQ","grecia":"GR","islas georgia del sur y sandwich del sur":"GS","guinea bisau":"GW","rae de hong kong china":"HK","islas heard y mcdonald":"HM","croacia":"HR","hungria":"HU","canarias":"IC","irlanda":"IE","isla de man":"IM","territorio britanico del oceano indico":"IO","irak":"IQ","islandia":"IS","italia":"IT","jordania":"JO","japon":"JP","kenia":"KE","kirguistan":"KG","camboya":"KH","comoras":"KM","san cristobal y nieves":"KN","corea del norte":"KP","corea del sur":"KR","islas caiman":"KY","kazajistan":"KZ","libano":"LB","santa lucia":"LC","lesoto":"LS","lituania":"LT","luxemburgo":"LU","letonia":"LV","libia":"LY","marruecos":"MA","moldavia":"MD","san martin":"MF","islas marshall":"MH","macedonia del norte":"MK","myanmar birmania":"MM","rae de macao china":"MO","islas marianas del norte":"MP","martinica":"MQ","mauricio":"MU","maldivas":"MV","malaui":"MW","malasia":"MY","nueva caledonia":"NC","isla norfolk":"NF","paises bajos":"NL","noruega":"NO","nueva zelanda":"NZ","polinesia francesa":"PF","papua nueva guinea":"PG","filipinas":"PH","polonia":"PL","san pedro y miquelon":"PM","islas pitcairn":"PN","territorios palestinos":"PS","palaos":"PW","catar":"QA","rumania":"RO","rusia":"RU","ruanda":"RW","arabia saudi":"SA","islas salomon":"SB","suecia":"SE","singapur":"SG","santa elena":"SH","eslovenia":"SI","svalbard y jan mayen":"SJ","eslovaquia":"SK","sierra leona":"SL","surinam":"SR","sudan del sur":"SS","santo tome y principe":"ST","siria":"SY","esuatini":"SZ","tristan de acuna":"TA","islas turcas y caicos":"TC","territorios australes franceses":"TF","tailandia":"TH","tayikistan":"TJ","tunez":"TN","turquia":"TR","trinidad y tobago":"TT","ucrania":"UA","islas menores alejadas de ee uu":"UM","estados unidos":"US","ciudad del vaticano":"VA","san vicente y las granadinas":"VC","islas virgenes britanicas":"VG","islas virgenes de ee uu":"VI","wallis y futuna":"WF","sudafrica":"ZA","zimbabue":"ZW","ile de l ascension":"AC","andorre":"AD","emirats arabes unis":"AE","antigua et barbuda":"AG","albanie":"AL","armenie":"AM","antarctique":"AQ","argentine":"AR","samoa americaines":"AS","autriche":"AT","australie":"AU","iles aland":"AX","azerbaidjan":"AZ","bosnie herzegovine":"BA","barbade":"BB","belgique":"BE","bulgarie":"BG","bahrein":"BH","saint barthelemy":"BL","bermudes":"BM","bolivie":"BO","pays bas caribeens":"BQ","bresil":"BR","bhoutan":"BT","ile bouvet":"BV","bielorussie":"BY","iles cocos":"CC","republique centrafricaine":"CF","suisse":"CH","iles cook":"CK","chili":"CL","cameroun":"CM","chine":"CN","colombie":"CO","ile clipperton":"CP","cap vert":"CV","ile christmas":"CX","chypre":"CY","tchequie":"CZ","allemagne":"DE","danemark":"DK","dominique":"DM","republique dominicaine":"DO","algerie":"DZ","ceuta et melilla":"EA","equateur":"EC","estonie":"EE","egypte":"EG","erythree":"ER","espagne":"ES","ethiopie":"ET","zone euro":"EZ","finlande":"FI","fidji":"FJ","iles malouines":"FK","micronesie":"FM","iles feroe":"FO","royaume uni":"GB","grenade":"GD","georgie":"GE","guyane francaise":"GF","groenland":"GL","gambie":"GM","guinee":"GN","guinee equatoriale":"GQ","grece":"GR","georgie du sud et les iles sandwich du sud":"GS","guinee bissau":"GW","r a s chinoise de hong kong":"HK","iles heard et macdonald":"HM","croatie":"HR","hongrie":"HU","iles canaries":"IC","indonesie":"ID","irlande":"IE","ile de man":"IM","inde":"IN","territoire britannique de l ocean indien":"IO","islande":"IS","italie":"IT","jamaique":"JM","jordanie":"JO","kirghizstan":"KG","cambodge":"KH","comores":"KM","saint christophe et nieves":"KN","coree du nord":"KP","coree du sud":"KR","koweit":"KW","iles caimans":"KY","liban":"LB","sainte lucie":"LC","lituanie":"LT","lettonie":"LV","libye":"LY","maroc":"MA","moldavie":"MD","saint martin":"MF","iles marshall":"MH","macedoine du nord":"MK","myanmar birmanie":"MM","mongolie":"MN","r a s chinoise de macao":"MO","iles mariannes du nord":"MP","mauritanie":"MR","malte":"MT","maurice":"MU","mexique":"MX","malaisie":"MY","namibie":"NA","nouvelle caledonie":"NC","ile norfolk":"NF","pays bas":"NL","norvege":"NO","nouvelle zelande":"NZ","perou":"PE","polynesie francaise":"PF","papouasie nouvelle guinee":"PG","pologne":"PL","saint pierre et miquelon":"PM","iles pitcairn":"PN","porto rico":"PR","territoires palestiniens":"PS","la reunion":"RE","roumanie":"RO","serbie":"RS","russie":"RU","arabie saoudite":"SA","iles salomon":"SB","soudan":"SD","suede":"SE","singapour":"SG","sainte helene":"SH","slovenie":"SI","svalbard et jan mayen":"SJ","slovaquie":"SK","saint marin":"SM","somalie":"SO","soudan du sud":"SS","sao tome et principe":"ST","salvador":"SV","saint martin partie neerlandaise":"SX","syrie":"SY","iles turques et caiques":"TC","tchad":"TD","terres australes francaises":"TF","thailande":"TH","tadjikistan":"TJ","timor oriental":"TL","tunisie":"TN","turquie":"TR","trinite et tobago":"TT","tanzanie":"TZ","ouganda":"UG","iles mineures eloignees des etats unis":"UM","etats unis":"US","ouzbekistan":"UZ","etat de la cite du vatican":"VA","saint vincent et les grenadines":"VC","iles vierges britanniques":"VG","iles vierges des etats unis":"VI","viet nam":"VN","wallis et futuna":"WF","afrique du sud":"ZA","zambie":"ZM","ilha de ascensao":"AC","emirados arabes unidos":"AE","afeganistao":"AF","antigua e barbuda":"AG","ilhas aland":"AX","azerbaijao":"AZ","bosnia e herzegovina":"BA","burquina faso":"BF","sao bartolomeu":"BL","paises baixos caribenhos":"BQ","butao":"BT","ilha bouvet":"BV","bielorrussia":"BY","ilhas cocos keeling":"CC","republica centro africana":"CF","republica do congo":"CG","suica":"CH","costa do marfim":"CI","ilhas cook":"CK","camaroes":"CM","ilha de clipperton":"CP","ilha christmas":"CX","tchequia":"CZ","alemanha":"DE","djibuti":"DJ","ceuta e melilla":"EA","equador":"EC","egito":"EG","saara ocidental":"EH","eritreia":"ER","espanha":"ES","zona do euro":"EZ","ilhas malvinas":"FK","ilhas faroe":"FO","franca":"FR","gabao":"GA","guiana francesa":"GF","gana":"GH","guine":"GN","guine equatorial":"GQ","ilhas georgia do sul e sandwich do sul":"GS","guine bissau":"GW","guiana":"GY","hong kong rae da china":"HK","ilhas heard e mcdonald":"HM","ilhas canarias":"IC","ilha de man":"IM","territorio britanico do oceano indico":"IO","iraque":"IQ","ira":"IR","japao":"JP","quenia":"KE","quirguistao":"KG","camboja":"KH","quiribati":"KI","sao cristovao e nevis":"KN","coreia do norte":"KP","coreia do sul":"KR","ilhas cayman":"KY","cazaquistao":"KZ","marrocos":"MA","sao martinho":"MF","ilhas marshall":"MH","macedonia do norte":"MK","mianmar birmania":"MM","macau rae da china":"MO","ilhas marianas do norte":"MP","mocambique":"MZ","nova caledonia":"NC","ilha norfolk":"NF","paises baixos":"NL","nova zelandia":"NZ","oma":"OM","papua nova guine":"PG","paquistao":"PK","sao pedro e miquelao":"PM","ilhas pitcairn":"PN","paraguai":"PY","reuniao":"RE","romenia":"RO","servia":"RS","arabia saudita":"SA","ilhas salomao":"SB","seicheles":"SC","sudao":"SD","singapura":"SG","santa helena":"SH","svalbard e jan mayen":"SJ","serra leoa":"SL","sudao do sul":"SS","sao tome e principe":"ST","essuatini":"SZ","tristao da cunha":"TA","ilhas turcas e caicos":"TC","chade":"TD","territorios franceses do sul":"TF","tadjiquistao":"TJ","turcomenistao":"TM","trinidad e tobago":"TT","ilhas menores distantes dos eua":"UM","uruguai":"UY","uzbequistao":"UZ","cidade do vaticano":"VA","sao vicente e granadinas":"VC","ilhas virgens britanicas":"VG","ilhas virgens americanas":"VI","vietna":"VN","wallis e futuna":"WF","iemen":"YE","africa do sul":"ZA","isola ascensione":"AC","emirati arabi uniti":"AE","antartide":"AQ","samoa americane":"AS","isole aland":"AX","azerbaigian":"AZ","bosnia ed erzegovina":"BA","belgio":"BE","caraibi olandesi":"BQ","brasile":"BR","isola bouvet":"BV","bielorussia":"BY","isole cocos keeling":"CC","repubblica centrafricana":"CF","svizzera":"CH","costa d avorio":"CI","isole cook":"CK","cile":"CL","cina":"CN","isola di clipperton":"CP","capo verde":"CV","isola christmas":"CX","cipro":"CY","cechia":"CZ","germania":"DE","gibuti":"DJ","danimarca":"DK","repubblica dominicana":"DO","egitto":"EG","sahara occidentale":"EH","spagna":"ES","eurozona":"EZ","figi":"FJ","isole falkland":"FK","isole f r er":"FO","regno unito":"GB","guyana francese":"GF","gibilterra":"GI","guadalupa":"GP","guinea equatoriale":"GQ","georgia del sud e sandwich australi":"GS","ras di hong kong":"HK","isole heard e mcdonald":"HM","croazia":"HR","ungheria":"HU","isole canarie":"IC","israele":"IL","isola di man":"IM","territorio britannico dell oceano indiano":"IO","islanda":"IS","giamaica":"JM","giordania":"JO","giappone":"JP","kirghizistan":"KG","cambogia":"KH","comore":"KM","saint kitts e nevis":"KN","corea del nord":"KP","corea del sud":"KR","isole cayman":"KY","kazakistan":"KZ","saint lucia":"LC","lussemburgo":"LU","lettonia":"LV","marocco":"MA","isole marshall":"MH","macedonia del nord":"MK","ras di macao":"MO","isole marianne settentrionali":"MP","maldive":"MV","messico":"MX","mozambico":"MZ","nuova caledonia":"NC","isola norfolk":"NF","paesi bassi":"NL","norvegia":"NO","nuova zelanda":"NZ","polinesia francese":"PF","papua nuova guinea":"PG","filippine":"PH","saint pierre e miquelon":"PM","isole pitcairn":"PN","portorico":"PR","territori palestinesi":"PS","portogallo":"PT","riunione":"RE","isole salomone":"SB","svezia":"SE","sant elena":"SH","slovacchia":"SK","sud sudan":"SS","isole turks e caicos":"TC","ciad":"TD","terre australi francesi":"TF","thailandia":"TH","tagikistan":"TJ","timor est":"TL","turchia":"TR","ucraina":"UA","isole minori esterne degli stati uniti":"UM","stati uniti":"US","citta del vaticano":"VA","saint vincent e grenadine":"VC","isole vergini britanniche":"VG","isole vergini americane":"VI","ascension":"AC","vereinigte arabische emirate":"AE","antigua und barbuda":"AG","albanien":"AL","armenien":"AM","antarktis":"AQ","argentinien":"AR","amerikanisch samoa":"AS","osterreich":"AT","australien":"AU","alandinseln":"AX","aserbaidschan":"AZ","bosnien und herzegowina":"BA","bangladesch":"BD","belgien":"BE","bulgarien":"BG","brunei darussalam":"BN","bolivien":"BO","karibische niederlande":"BQ","brasilien":"BR","bouvetinsel":"BV","kanada":"CA","kokosinseln":"CC","kongo kinshasa":"CD","zentralafrikanische republik":"CF","kongo brazzaville":"CG","schweiz":"CH","cookinseln":"CK","kamerun":"CM","kolumbien":"CO","clipperton insel":"CP","kuba":"CU","weihnachtsinsel":"CX","zypern":"CY","tschechien":"CZ","deutschland":"DE","dschibuti":"DJ","dominikanische republik":"DO","algerien":"DZ","ceuta und melilla":"EA","estland":"EE","agypten":"EG","westsahara":"EH","spanien":"ES","athiopien":"ET","finnland":"FI","fidschi":"FJ","falklandinseln":"FK","mikronesien":"FM","faroer":"FO","frankreich":"FR","gabun":"GA","vereinigtes konigreich":"GB","georgien":"GE","franzosisch guayana":"GF","gronland":"GL","aquatorialguinea":"GQ","griechenland":"GR","sudgeorgien und die sudlichen sandwichinseln":"GS","sonderverwaltungsregion hongkong":"HK","heard und mcdonaldinseln":"HM","kroatien":"HR","ungarn":"HU","kanarische inseln":"IC","indonesien":"ID","irland":"IE","indien":"IN","britisches territorium im indischen ozean":"IO","island":"IS","italien":"IT","jamaika":"JM","jordanien":"JO","kirgisistan":"KG","kambodscha":"KH","komoren":"KM","st kitts und nevis":"KN","nordkorea":"KP","sudkorea":"KR","kaimaninseln":"KY","kasachstan":"KZ","libanon":"LB","litauen":"LT","luxemburg":"LU","lettland":"LV","libyen":"LY","marokko":"MA","republik moldau":"MD","madagaskar":"MG","marshallinseln":"MH","nordmazedonien":"MK","myanmar":"MM","mongolei":"MN","sonderverwaltungsregion macau":"MO","nordliche marianen":"MP","mauretanien":"MR","malediven":"MV","mexiko":"MX","mosambik":"MZ","neukaledonien":"NC","norfolkinsel":"NF","niederlande":"NL","norwegen":"NO","neuseeland":"NZ","franzosisch polynesien":"PF","papua neuguinea":"PG","philippinen":"PH","polen":"PL","st pierre und miquelon":"PM","pitcairninseln":"PN","palastinensische autonomiegebiete":"PS","katar":"QA","rumanien":"RO","serbien":"RS","russland":"RU","saudi arabien":"SA","salomonen":"SB","seychellen":"SC","schweden":"SE","slowenien":"SI","spitzbergen und jan mayen":"SJ","slowakei":"SK","sudsudan":"SS","sao tome und principe":"ST","syrien":"SY","turks und caicosinseln":"TC","tschad":"TD","franzosische sud und antarktisgebiete":"TF","tadschikistan":"TJ","tunesien":"TN","turkei":"TR","trinidad und tobago":"TT","tansania":"TZ","amerikanische uberseeinseln":"UM","vereinigte staaten":"US","usbekistan":"UZ","vatikanstadt":"VA","st vincent und die grenadinen":"VC","britische jungferninseln":"VG","amerikanische jungferninseln":"VI","wallis und futuna":"WF","jemen":"YE","sudafrika":"ZA","sambia":"ZM","simbabwe":"ZW","usa":"US","us":"US","united states of america":"US","ee uu":"US","eeuu":"US","uk":"GB","england":"GB","scotland":"GB","wales":"GB","great britain":"GB","holland":"NL","the netherlands":"NL","ivory coast":"CI","burma":"MM","czech republic":"CZ","swaziland":"SZ","turkey":"TR","uae":"AE","east timor":"TL"};
+  function flag(n){var k=(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim(), c=CC[k]; return c?String.fromCodePoint(127397+c.charCodeAt(0),127397+c.charCodeAt(1)):''; }
+  function ccOf(n){ var k=(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim(); return CC[k]||''; }
+  function fl(n){var f=flag(n);return f?f+' ':''}
+  function fmtM(m){var p=(m||'').split('-'); if(p.length<2) return ''; var d=new Date(+p[0],+p[1]-1,1); return isNaN(d)?'':d.toLocaleDateString('en',{month:'short',year:'numeric'});}
+  function letterOf(nm){
+    var L=(nm||'').charAt(0).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+    return /[A-Z]/.test(L)?L:'#';
+  }
+
+  /* picture box: your photo, otherwise the logo placeholder */
+  function cropCss(c){ return 'translate('+(c.px*100)+'%,'+(c.py*100)+'%) scale('+c.z+')'; }
+  function pic(p,onzoom,sample){
+    var box=h('div',{class:'ph'});
+    if(onzoom){
+      box.className='ph zoomable'; box.setAttribute('role','button'); box.setAttribute('tabindex','0'); box.setAttribute('aria-label','Zoom picture');
+      box.addEventListener('click',onzoom);
+      box.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); onzoom(); } });
+    }
+    if(p) getPhoto(p.id).then(function(src){
+      if(!src) return;
+      var im=new Image(); im.alt='';
+      im.onload=function(){ if(p.crop) im.style.transform=cropCss(p.crop); box.appendChild(im); };
+      im.src=src;
+    });
+    if(sample) box.appendChild(h('span',{class:'tag label'},'Sample'));
+    return box;
+  }
+
+  /* routing: #c/<country> and #c/<country>/<city> */
+  function go(hash){ if(location.hash===hash) route(); else location.hash=hash; }
+  function route(keep){
+    if(ready&&/^#join=/.test(location.hash)){ joinFromHash(); return; }
+    var m=/^#c\/([^\/]+)(?:\/([^\/]+))?$/.exec(location.hash);
+    state.map=location.hash==='#map'; state.c=m?decodeURIComponent(m[1]):null; state.t=(m&&m[2])?decodeURIComponent(m[2]):null;
+    render(); if(!keep) window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',function(){route(false)});
+  var toastT=0;
+  function toast(msg,ms){ var t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent=msg; t.hidden=false; clearTimeout(toastT); if(ms!==0) toastT=setTimeout(function(){ t.hidden=true; },ms||5000); }
+  function say(msg){ var nb=$('#notice'); nb.dataset.msg='1'; nb.hidden=false; nb.textContent=msg; toast(msg); }
+
+  /* sync between phones with a code (Firebase Realtime Database over plain web requests) */
+  function J(u,o,ms){ o=o||{}; var c=window.AbortController?new AbortController():null, t=0; if(c){ o.signal=c.signal; t=setTimeout(function(){ c.abort(); },ms||30000); }
+    return fetch(u,o).then(function(r){ clearTimeout(t); if(!r.ok) throw new Error(r.status); return r.status===204?null:r.json(); },function(e){ clearTimeout(t); throw e; }); }
+  function merge(arr,rem){
+    var out=[], have={}, pushed=[];
+    arr.forEach(function(o){
+      if(o.sample){ out.push(o); return; }
+      have[o.id]=1; var r=rem[o.id];
+      if(tomb[o.id]&&tomb[o.id]>(o.mod||0)) return;
+      if(r&&(r.mod||0)>(o.mod||0)) out.push(r);
+      else { out.push(o); if(!r||(o.mod||0)>(r.mod||0)) pushed.push(o); }
+    });
+    Object.keys(rem).forEach(function(id){ if(have[id]) return; var r=rem[id]; if(tomb[id]&&tomb[id]>(r.mod||0)) return; out.push(r); });
+    return {out:out,pushed:pushed};
+  }
+  function syncNow(silent){
+    if(!sy.url||!sy.key) return Promise.resolve();
+    if(syncing){ if(!silent) toast('Sync is already running. Please wait…',4000); return Promise.resolve(); }
+    syncing=true; if(isSample){ countries=[]; cities=[]; isSample=false; $('#notice').dataset.msg=''; $('#notice').hidden=true; }
+    if(!silent) toast('Syncing…',0);
+    var B=sy.url+'/sync/'+sy.key, BP=sy.url+'/photo/'+sy.key, up={}, before=JSON.stringify(cities)+JSON.stringify(countries), RP={};
+    /* step 1: trips and notes (small) go first, so the other phone sees them right away */
+    return Promise.all([J(B+'.json'),J(BP+'.json?shallow=true')]).then(function(r){
+      var R=r[0]||{}, rc=R.countries||{}, rt=R.cities||{}, rtomb=R.tomb||{}; RP=r[1]||{};
+      Object.keys(rtomb).forEach(function(id){ if(!tomb[id]||tomb[id]<rtomb[id]) tomb[id]=rtomb[id]; });
+      var cm=merge(countries,rc), tm=merge(cities,rt);
+      countries=cm.out; cities=tm.out;
+      cm.pushed.forEach(function(o){ up['countries/'+o.id]=o; }); tm.pushed.forEach(function(o){ up['cities/'+o.id]=o; });
+      Object.keys(tomb).forEach(function(id){
+        if((rtomb[id]||0)<tomb[id]) up['tomb/'+id]=tomb[id];
+        if(rc[id]&&tomb[id]>(rc[id].mod||0)) up['countries/'+id]=null;
+        if(rt[id]&&tomb[id]>(rt[id].mod||0)) up['cities/'+id]=null;
+      });
+      if(Object.keys(up).length) return J(B+'.json?print=silent',{method:'PATCH',body:JSON.stringify(up)});
+    }).then(function(){
+      initJ(); sy.last=new Date().toISOString(); return put('sync',sy).then(persist);
+    }).then(function(){
+      var a=document.activeElement, typing=a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA');
+      if(!silent||(before!==JSON.stringify(cities)+JSON.stringify(countries)&&!typing)) render();
+      /* step 2: photos (large), one by one; a photo that fails does not stop the others */
+      var ids=[]; cities.forEach(function(t){ (t.photos||[]).forEach(function(q){ ids.push(q.id); }); });
+      var done=0, failed=0, got=0, todo=ids.length;
+      return ids.reduce(function(pr,id){ return pr.then(function(){ return get('photo:'+id); }).then(function(loc){
+        if(!loc&&RP[id]) return J(BP+'/'+id+'.json',null,120000).then(function(d){ if(d){ photoCache[id]=d; got++; return put('photo:'+id,d); } });
+        if(loc&&!RP[id]) return J(BP+'/'+id+'.json?print=silent',{method:'PUT',body:JSON.stringify(loc)},120000);
+      }).catch(function(){ failed++; }).then(function(){ done++; if(!silent&&todo>3&&done<todo) toast('Photos: '+done+' of '+todo+'…',0); }); },Promise.resolve())
+      .then(function(){
+        syncing=false;
+        if(got) render();
+        if(!silent) toast(failed?'Trips synced. '+failed+(failed===1?' photo':' photos')+' could not be sent. Tap Sync now to try again.':'Synced.',failed?8000:3000);
+      });
+    }).catch(function(){ syncing=false; if(!silent) toast('Sync failed. Check your internet connection and the database rules.',8000); });
+  }
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) syncNow(true); });
+  function codeOf(){ return btoa(sy.url+'|'+sy.key).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function showCode(){
+    var p=$('#panel'); p.textContent='';
+    var inp=h('input',{type:'text',readonly:'readonly',value:codeOf(),'aria-label':'Sync code'});
+    p.appendChild(h('h2',null,'Your sync code'));
+    p.appendChild(h('p',{class:'note'},'Scan the QR code with the camera of your other phone, or enter the code. Keep it private: anyone with it can read and change your trips.'));
+    p.appendChild(h('div',{class:'field'},inp));
+    var qbox=h('div',{style:'text-align:center;margin:8px 0'}); p.appendChild(qbox);
+    var link=location.origin+location.pathname+'#join='+codeOf();
+    loadQR().then(function(){ var q=qrcode(0,'M'); q.addData(link); q.make();
+      qbox.appendChild(h('img',{src:q.createDataURL(5,3),alt:'QR code to join sync',style:'width:100%;max-width:260px;image-rendering:pixelated;background:#fff'})); })
+      .catch(function(){ qbox.appendChild(h('p',{class:'note'},'The QR code needs an internet connection.')); });
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){
+      if(navigator.share) navigator.share({title:'Travel sync',url:link}).catch(function(){}); else { try{ navigator.clipboard.writeText(link); }catch(e){} } }}},'Share link')));
+    p.appendChild(h('div',{class:'btnrow'},
+      h('button',{class:'btn solid',type:'button',on:{click:function(){ inp.select(); try{ navigator.clipboard.writeText(inp.value); }catch(e){} }}},'Copy'),
+      h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Close')));
+    openSheet();
+  }
+  function loadQR(){
+    if(window.qrcode) return Promise.resolve();
+    return new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); });
+  }
+  function joinFromHash(){
+    var c=location.hash.slice(6); history.replaceState(null,'',location.pathname+location.search);
+    var d=''; try{ d=atob(c.replace(/-/g,'+').replace(/_/g,'/')); }catch(e){}
+    var i=d.indexOf('|'); if(i<1){ render(); say('That sync link does not look right.'); return; }
+    var u=d.slice(0,i).replace(/\/$/,''), k=d.slice(i+1);
+    J(u+'/sync/'+k+'/probe.json').then(function(){ sy={url:u,key:k,last:''}; return put('sync',sy); })
+      .then(function(){ state.c=state.t=null; state.map=false; render(); say('Connected. Syncing your trips\u2026'); return syncNow(false); })
+      .then(function(){ $('#notice').dataset.msg=''; $('#notice').hidden=true; render(); })
+      .catch(function(){ render(); say('Could not connect with that link.'); });
+  }
+  function openSync(){
+    var p=$('#panel'); p.textContent='';
+    var code=h('input',{id:'f-code',type:'text',autocomplete:'off',placeholder:'Paste the code from your other phone'});
+    var url=h('input',{id:'f-url',type:'text',autocomplete:'off',placeholder:'https://\u2026firebaseio.com'});
+    var st=h('p',{class:'note'},'');
+    function connect(u,k,show){
+      st.textContent='Connecting\u2026'; u=u.replace(/\/$/,'');
+      J(u+'/sync/'+k+'/probe.json').then(function(){ sy={url:u,key:k,last:''}; return put('sync',sy); })
+        .then(function(){ closeSheet(); render(); return syncNow(false); }).then(function(){ if(show) showCode(); })
+        .catch(function(){ st.textContent='Could not connect. Check the address, the database rules and your internet.'; });
+    }
+    p.appendChild(h('h2',null,'Sync with a code'));
+    p.appendChild(h('div',{class:'label gold'},'Second phone'));
+    p.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-code'},'Sync code'),code));
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:function(){
+      var d=''; try{ d=atob(code.value.trim().replace(/^.*#join=/,'').replace(/-/g,'+').replace(/_/g,'/')); }catch(e){}
+      var i=d.indexOf('|'); if(i<1){ st.textContent='That code does not look right.'; return; }
+      connect(d.slice(0,i),d.slice(i+1),false);
+    }}},'Join')));
+    p.appendChild(h('div',{class:'label gold',style:'margin-top:16px'},'First phone'));
+    p.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-url'},'Your Firebase database address'),url));
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:function(){
+      var u=url.value.trim(); if(!/^https:\/\/[^ ]+$/.test(u)){ st.textContent='Paste the database address first.'; return; }
+      var b=new Uint8Array(12); crypto.getRandomValues(b);
+      connect(u,Array.prototype.map.call(b,function(x){ return (x%36).toString(36); }).join(''),true);
+    }}},'Create code')));
+    p.appendChild(st);
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    openSheet();
+  }
+  function syncBlock(){
+    var d=h('div',{class:'gallery'}); d.appendChild(sec('Sync between phones'));
+    if(!sy.key){
+      d.appendChild(h('p',{class:'note'},'Keep two phones up to date with a code.'));
+      d.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:openSync}},'Set up sync')));
+      return d;
+    }
+    d.appendChild(h('p',{class:'note'},sy.last?'Last synced: '+new Date(sy.last).toLocaleString('en',{dateStyle:'medium',timeStyle:'short'}):'Not synced yet.'));
+    d.appendChild(h('div',{class:'btnrow'},
+      h('button',{class:'btn solid',type:'button',on:{click:function(){ syncNow(false); }}},'Sync now'),
+      h('button',{class:'btn',type:'button',on:{click:showCode}},'My code'),
+      twoStep('Turn off','Sure?',function(){ sy={url:'',key:'',last:''}; put('sync',sy).then(render); })));
+    return d;
+  }
+
+  /* map: world outline loaded once (then kept), pins placed by looking up each city */
+  var worldD=null, geoRun=false, mapRedraw=null;
+  function sv(tag,a){ var e=document.createElementNS('http://www.w3.org/2000/svg',tag); for(var k in a) e.setAttribute(k,a[k]); return e; }
+  function topoD(tp){
+    var sc=tp.transform.scale, tr=tp.transform.translate;
+    var arcs=tp.arcs.map(function(a){ var x=0,y=0; return a.map(function(q){ x+=q[0]; y+=q[1]; return [x*sc[0]+tr[0],y*sc[1]+tr[1]]; }); });
+    function ring(r){ var pts=[]; r.forEach(function(i){ var a=i<0?arcs[~i].slice().reverse():arcs[i]; pts=pts.concat(pts.length?a.slice(1):a); });
+      return 'M'+pts.map(function(q){ return (q[0]+180).toFixed(2)+' '+(84-q[1]).toFixed(2); }).join('L')+'Z'; }
+    var d='';
+    tp.objects.countries.geometries.forEach(function(g){
+      var polys=g.type==='Polygon'?[g.arcs]:g.type==='MultiPolygon'?g.arcs:[];
+      polys.forEach(function(P){ P.forEach(function(r){ d+=ring(r); }); });
+    });
+    return d;
+  }
+  function loadWorld(){
+    if(worldD) return Promise.resolve(worldD);
+    return get('worldd').then(function(v){
+      if(v){ worldD=v; return v; }
+      return fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function(r){ return r.json(); })
+        .then(function(tp){ worldD=topoD(tp); put('worldd',worldD); return worldD; });
+    });
+  }
+  function geoFind(t,c){
+    var base='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=en&';
+    function q(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }); }
+    return q(base+'q='+encodeURIComponent(t.name+', '+c.name)).then(function(a){
+      if(!Array.isArray(a)) throw new Error('bad answer');
+      if(a[0]) return a[0];
+      var k=ccOf(c.name); if(!k) return null;
+      return new Promise(function(r){ setTimeout(r,1100); }).then(function(){ return q(base+'countrycodes='+k.toLowerCase()+'&q='+encodeURIComponent(t.name)); })
+        .then(function(b){ if(!Array.isArray(b)) throw new Error('bad answer'); return b[0]||null; });
+    });
+  }
+  function geocodeAll(){
+    if(geoRun) return Promise.resolve(); geoRun=true;
+    var todo=cities.filter(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; });
+    return todo.reduce(function(pr,t){ return pr.then(function(){
+      var c=countryOf(t.cid); if(!c) return;
+      return geoFind(t,c)
+        .then(function(a){ if(a){ t.lat=+a.lat; t.lng=+a.lon; delete t.geo; } else t.geo='none'; return saveData(); })
+        .then(function(){ if(state.map&&mapRedraw) mapRedraw(); })
+        .then(function(){ return new Promise(function(r){ setTimeout(r,1100); }); })
+        .catch(function(){ return new Promise(function(r){ setTimeout(r,1100); }); });
+    }); },Promise.resolve()).then(function(){ geoRun=false; },function(){ geoRun=false; });
+  }
+  /* ---- full-screen map (MapLibre GL + MapTiler) ---- */
+  var MT_KEYS=['e5mV0QX25TdmK2te5ETK','e5mVOQX25TdmK2te5ETK'];
+  var MT_STYLES=['streets-v2-pastel','basic-v2-light','streets-v2'];
+  var MLV='https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/';
+  var mapInst=null, mapView=null, mapSel='', mapPlacing=null, geoReset=false;
+  function loadMapLib(){
+    if(window.maplibregl) return Promise.resolve();
+    return new Promise(function(res,rej){
+      var l=document.createElement('link'); l.rel='stylesheet'; l.href=MLV+'maplibre-gl.css'; document.head.appendChild(l);
+      var sc=document.createElement('script'); sc.src=MLV+'maplibre-gl.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc);
+      setTimeout(function(){ if(!window.maplibregl) rej(new Error('timeout')); },12000);
+    });
+  }
+  function mapStyleUrl(){
+    var saved=''; try{ saved=localStorage.getItem('mapstyle')||''; }catch(e){}
+    var list=[]; if(saved) list.push(saved);
+    MT_KEYS.forEach(function(k){ MT_STYLES.forEach(function(s){ list.push('https://api.maptiler.com/maps/'+s+'/style.json?key='+k); }); });
+    return list.reduce(function(pr,u){ return pr.then(function(found){
+      if(found) return found;
+      return fetch(u).then(function(r){ if(!r.ok) return ''; try{ localStorage.setItem('mapstyle',u); }catch(e){} return u; }).catch(function(){ return ''; });
+    }); },Promise.resolve('')).then(function(u){ if(!u) throw new Error('style'); return u; });
+  }
+  function destroyMap(){
+    if(mapInst){ try{ mapView={c:mapInst.getCenter(),z:mapInst.getZoom()}; mapInst.remove(); }catch(e){} mapInst=null; }
+    var w=document.getElementById('mapfull'); if(w) w.remove();
+    document.body.classList.remove('mapmode'); mapPlacing=null; if(mapRedraw) mapRedraw=null;
+  }
+  function placedCities(){ return cities.filter(function(t){ return typeof t.lat==='number'&&typeof t.lng==='number'; }); }
+  function renderMap(v){
+    if(!geoReset){ geoReset=true; cities.forEach(function(t){ if(t.geo==='none') delete t.geo; }); }
+    var note=h('p',{class:'note'},'Loading the map…'); v.appendChild(h('div',{class:'gallery'},h('div',null,h('h2',{class:'gtitle'},'Map')),note));
+    Promise.all([loadMapLib(),mapStyleUrl()]).then(function(r){
+      if(!state.map||!v.isConnected) return;
+      buildMap(r[1]);
+    }).catch(function(){
+      if(!state.map||!v.isConnected) return;
+      v.textContent=''; renderMapSvg(v);
+    });
+  }
+  function buildMap(styleUrl){
+    destroyMap();
+    var wrap=h('div',{id:'mapfull'}), mapEl=h('div',{class:'mf-map'}), top=h('div',{class:'mf-top'}), card=h('div',{class:'mf-card'}), banner=h('div',{class:'mf-banner'});
+    var navbar=document.querySelector('.bar'); wrap.style.bottom=(navbar?navbar.offsetHeight:56)+'px';
+    card.hidden=true; banner.hidden=true;
+    wrap.appendChild(mapEl); wrap.appendChild(top); wrap.appendChild(banner); wrap.appendChild(card);
+    document.body.appendChild(wrap); document.body.classList.add('mapmode');
+
+    var pts=placedCities(), opts={container:mapEl,style:styleUrl,attributionControl:false,dragRotate:false,minZoom:1,maxZoom:18,center:[0,20],zoom:1.4};
+    if(mapView){ opts.center=[mapView.c.lng,mapView.c.lat]; opts.zoom=mapView.z; }
+    var map=new maplibregl.Map(opts); mapInst=map;
+    try{ map.touchZoomRotate.disableRotation(); }catch(e){}
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+
+    function geo(){
+      return {type:'FeatureCollection',features:placedCities().map(function(t){
+        return {type:'Feature',properties:{id:t.id,name:t.name},geometry:{type:'Point',coordinates:[t.lng,t.lat]}};
+      })};
+    }
+    function fitAll(anim){
+      var ps=placedCities(); if(!ps.length) return;
+      if(ps.length===1){ map.easeTo({center:[ps[0].lng,ps[0].lat],zoom:6,duration:anim?800:0}); return; }
+      var b=new maplibregl.LngLatBounds(); ps.forEach(function(t){ b.extend([t.lng,t.lat]); });
+      map.fitBounds(b,{padding:{top:90,bottom:70,left:40,right:40},maxZoom:6,duration:anim?800:0});
+    }
+    function refresh(){
+      var s=map.getSource('pins'); if(s) s.setData(geo());
+      var un=cities.filter(function(t){ return typeof t.lat!=='number'; });
+      chip.textContent=''; chip.hidden=!un.length;
+      if(un.length) chip.appendChild(document.createTextNode(un.length+(un.length===1?' city':' cities')+' not on the map'));
+    }
+    function select(id,fly){
+      mapSel=id||'';
+      if(map.getLayer('pt-sel')) map.setFilter('pt-sel',['all',['!',['has','point_count']],['==',['get','id'],mapSel]]);
+      showCard();
+      var t=id?cityOf(id):null;
+      if(t&&fly&&typeof t.lat==='number') map.easeTo({center:[t.lng,t.lat],zoom:Math.max(map.getZoom(),5),duration:700});
+    }
+    function showCard(){
+      card.textContent=''; var t=mapSel?cityOf(mapSel):null;
+      if(!t){ card.hidden=true; return; }
+      var c=countryOf(t.cid)||{name:''}, n=(t.photos||[]).length, th=h('div',{class:'th'},pic(coverOf(t),null,false));
+      card.hidden=false;
+      card.appendChild(th);
+      card.appendChild(h('div',{class:'grow'},h('b',{class:'cname'},t.name),h('div',{class:'sci'},fl(c.name)+c.name+(n?' · '+plural(n,'photo','photos'):''))));
+      card.appendChild(h('div',{class:'mf-act'},
+        h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(t.cid)+'/'+encodeURIComponent(t.id)); }}},'Open'),
+        h('a',{class:'btn sm',href:mapsUrl(t,c),target:'_blank',rel:'noopener',style:'display:flex;align-items:center;justify-content:center;text-decoration:none'},'Google Maps')));
+      card.appendChild(h('button',{class:'btn quiet sm',type:'button','aria-label':'Close',on:{click:function(){ select('',false); }}},'×'));
+    }
+
+    /* search your own cities */
+    var inp=h('input',{class:'mf-search',type:'search',placeholder:'Search your cities','aria-label':'Search your cities',autocomplete:'off'}), res=h('div',{class:'mf-res'});
+    res.hidden=true;
+    inp.addEventListener('input',function(){
+      var q=inp.value.trim().toLowerCase(); res.textContent=''; if(!q){ res.hidden=true; return; }
+      var m=cities.filter(function(t){ var c=countryOf(t.cid)||{name:''}; return t.name.toLowerCase().indexOf(q)>=0||c.name.toLowerCase().indexOf(q)>=0; }).slice(0,6);
+      if(!m.length){ res.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'No city found.')); res.hidden=false; return; }
+      m.forEach(function(t){
+        var c=countryOf(t.cid)||{name:''};
+        res.appendChild(h('button',{type:'button',on:{click:function(){
+          res.hidden=true; inp.value='';
+          if(typeof t.lat==='number') select(t.id,true); else say(t.name+' is not on the map yet. Tap "not on the map" to place it.');
+        }}},h('b',null,t.name),h('span',{class:'sci'},fl(c.name)+c.name)));
+      });
+      res.hidden=false;
+    });
+    top.appendChild(inp); top.appendChild(res);
+    var chip=h('button',{class:'mf-chip',type:'button',on:{click:function(){ unplacedSheet(); }}},''); chip.hidden=true; top.appendChild(chip);
+
+    /* cities the lookup could not place: retry or place by hand */
+    function unplacedSheet(){
+      var p=$('#panel'); p.textContent=''; p.appendChild(h('h2',null,'Not on the map'));
+      var un=cities.filter(function(t){ return typeof t.lat!=='number'; });
+      if(!un.length) p.appendChild(h('p',{class:'note'},'Every city has a pin.'));
+      un.forEach(function(t){
+        var c=countryOf(t.cid)||{name:''};
+        p.appendChild(h('div',{class:'pl'},h('div',{class:'grow'},h('b',null,t.name),h('div',{class:'sci'},fl(c.name)+c.name)),
+          h('button',{class:'btn sm',type:'button',on:{click:function(){ closeSheet(); startPlacing(t); }}},'Place')));
+      });
+      p.appendChild(h('div',{class:'btnrow'},
+        h('button',{class:'btn solid',type:'button',on:{click:function(){ cities.forEach(function(t){ if(typeof t.lat!=='number') delete t.geo; }); closeSheet(); say('Looking up the cities again…'); geocodeAll().then(function(){ refresh(); say('Done.'); }); }}},'Try again'),
+        h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Close')));
+      openSheet();
+    }
+    function startPlacing(t){
+      mapPlacing=t; select('',false);
+      banner.textContent=''; banner.hidden=false;
+      banner.appendChild(h('span',null,'Tap the map where '+t.name+' is'));
+      banner.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ mapPlacing=null; banner.hidden=true; }}},'Cancel'));
+      map.getCanvas().style.cursor='crosshair';
+    }
+
+    var mapLoaded=false;
+    map.on('error',function(e){ if(!mapLoaded){ var m=(e&&e.error&&e.error.message)||'unknown'; say('Map problem: '+m); } });
+    map.on('load',function(){
+      mapLoaded=true;
+      map.addSource('pins',{type:'geojson',data:geo(),cluster:true,clusterRadius:42,clusterMaxZoom:9});
+      map.addLayer({id:'cl',type:'circle',source:'pins',filter:['has','point_count'],paint:{'circle-color':'#1F1C18','circle-radius':['step',['get','point_count'],15,5,18,15,22],'circle-stroke-color':'#FAF7F2','circle-stroke-width':2.5}});
+      map.addLayer({id:'cl-n',type:'symbol',source:'pins',filter:['has','point_count'],layout:{'text-field':['get','point_count_abbreviated'],'text-font':['Noto Sans Bold'],'text-size':13,'text-allow-overlap':true},paint:{'text-color':'#FAF7F2'}});
+      map.addLayer({id:'pt',type:'circle',source:'pins',filter:['!',['has','point_count']],paint:{'circle-color':'#A98C55','circle-radius':6,'circle-stroke-color':'#FAF7F2','circle-stroke-width':2}});
+      map.addLayer({id:'pt-sel',type:'circle',source:'pins',filter:['all',['!',['has','point_count']],['==',['get','id'],mapSel]],paint:{'circle-color':'rgba(0,0,0,0)','circle-radius':12,'circle-stroke-color':'#1F1C18','circle-stroke-width':2}});
+      map.addLayer({id:'pt-l',type:'symbol',source:'pins',minzoom:3,filter:['!',['has','point_count']],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':12,'text-anchor':'top','text-offset':[0,0.9],'text-optional':true},paint:{'text-color':'#1F1C18','text-halo-color':'#FAF7F2','text-halo-width':1.6}});
+      if(mapSel) select(mapSel,false);
+      refresh();
+    });
+    map.on('click',function(e){
+      if(mapPlacing){
+        var t=mapPlacing; mapPlacing=null; banner.hidden=true; map.getCanvas().style.cursor='';
+        t.lat=e.lngLat.lat; t.lng=e.lngLat.lng; delete t.geo;
+        saveData().then(function(){ refresh(); select(t.id,false); });
+        return;
+      }
+      res.hidden=true;
+      var bb=[[e.point.x-14,e.point.y-14],[e.point.x+14,e.point.y+14]], fs=map.getLayer('cl')?map.queryRenderedFeatures(bb,{layers:['cl','pt']}):[];
+      if(!fs.length){ if(mapSel) select('',false); return; }
+      var f=fs[0];
+      if(f.properties&&f.properties.cluster_id!==undefined){
+        var src=map.getSource('pins'), z=src.getClusterExpansionZoom(f.properties.cluster_id);
+        var go2=function(zoom){ map.easeTo({center:f.geometry.coordinates,zoom:zoom+0.2,duration:600}); };
+        if(z&&z.then) z.then(go2); else src.getClusterExpansionZoom(f.properties.cluster_id,function(err,zz){ if(!err) go2(zz); });
+      } else select(f.properties.id,true);
+    });
+    map.on('mousemove',function(e){ if(mapPlacing||!map.getLayer('cl')) return; var fs=map.queryRenderedFeatures(e.point,{layers:['cl','pt']}); map.getCanvas().style.cursor=fs.length?'pointer':''; });
+    mapRedraw=function(){ if(mapInst) refresh(); };
+
+    if(!mapView) fitAll(false);
+    showCard();
+    if(cities.some(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; })){
+      geocodeAll().then(function(){ if(mapInst){ refresh(); if(!mapView) fitAll(true); } });
+    }
+  }
+  function renderMapSvg(v){
+    var g=h('div',{class:'gallery'}), note=h('p',{class:'note'},''), box=h('div',{class:'mapbox'}), info=h('div');
+    g.appendChild(h('div',null,h('h2',{class:'gtitle'},'Map'))); g.appendChild(note); g.appendChild(box); g.appendChild(info); v.appendChild(g);
+    var w=box.clientWidth, hh=box.clientHeight, svg=sv('svg',{width:'100%',height:'100%'});
+    var land=sv('path',{fill:'#EFE6D6',stroke:'#A98C55','stroke-width':'0.6','vector-effect':'non-scaling-stroke','fill-rule':'evenodd'}), pins=sv('g',{});
+    svg.appendChild(land); svg.appendChild(pins); box.appendChild(svg);
+    var V={cx:180,cy:71,k:1}, sel=null, kmax=Math.max(360/w,142/hh);
+    function list(){ return cities.filter(function(t){ return typeof t.lat==='number'; }); }
+    function XY(t){ return [t.lng+180,84-t.lat]; }
+    function fit(){
+      var L=list(); if(!L.length){ V={cx:180,cy:71,k:kmax}; return; }
+      var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+      L.forEach(function(t){ var q=XY(t); x0=Math.min(x0,q[0]); x1=Math.max(x1,q[0]); y0=Math.min(y0,q[1]); y1=Math.max(y1,q[1]); });
+      V={cx:(x0+x1)/2,cy:(y0+y1)/2,k:Math.max((x1-x0+24)/w,(y1-y0+24)/hh,0.12)};
+    }
+    function draw(){
+      V.k=Math.min(kmax,Math.max(0.02,V.k)); V.cx=Math.min(360,Math.max(0,V.cx)); V.cy=Math.min(174,Math.max(0,V.cy));
+      svg.setAttribute('viewBox',(V.cx-w*V.k/2)+' '+(V.cy-hh*V.k/2)+' '+(w*V.k)+' '+(hh*V.k));
+      pins.textContent='';
+      list().forEach(function(t){ var q=XY(t);
+        pins.appendChild(sv('circle',{cx:q[0],cy:q[1],r:(t===sel?9:6)*V.k,fill:t===sel?'#4A3A22':'#A98C55',stroke:'#FAF7F2','stroke-width':'1.5','vector-effect':'non-scaling-stroke'})); });
+    }
+    function showInfo(){
+      info.textContent=''; if(!sel) return; var c=countryOf(sel.cid)||{name:''};
+      info.appendChild(h('div',{class:'mapcard'},
+        h('div',{class:'grow'},h('b',null,sel.name),h('div',{class:'sci'},fl(c.name)+c.name+(sel.visited?' \u00b7 '+fmtM(sel.visited):''))),
+        h('button',{class:'btn solid sm',type:'button',on:{click:function(){ go('#c/'+encodeURIComponent(sel.cid)+'/'+encodeURIComponent(sel.id)); }}},'Open')));
+    }
+    function tap(x,y){
+      var best=null, bd=28;
+      list().forEach(function(t){ var q=XY(t), d=Math.hypot((q[0]-V.cx)/V.k+w/2-x,(q[1]-V.cy)/V.k+hh/2-y); if(d<bd){ bd=d; best=t; } });
+      sel=best; showInfo(); draw();
+    }
+    var ptr={}, moved=0;
+    svg.addEventListener('pointerdown',function(e){ try{svg.setPointerCapture(e.pointerId)}catch(_){} ptr[e.pointerId]={x:e.clientX,y:e.clientY}; moved=0; });
+    svg.addEventListener('pointermove',function(e){
+      var p=ptr[e.pointerId]; if(!p) return; var ids=Object.keys(ptr);
+      if(ids.length===1){ V.cx-=(e.clientX-p.x)*V.k; V.cy-=(e.clientY-p.y)*V.k; moved+=Math.abs(e.clientX-p.x)+Math.abs(e.clientY-p.y); }
+      else if(ids.length===2){ var o=ptr[ids[0]===String(e.pointerId)?ids[1]:ids[0]], d0=Math.hypot(p.x-o.x,p.y-o.y), d1=Math.hypot(e.clientX-o.x,e.clientY-o.y); if(d1>0) V.k*=d0/d1; moved+=10; }
+      p.x=e.clientX; p.y=e.clientY; draw();
+    });
+    svg.addEventListener('pointerup',function(e){
+      var p=ptr[e.pointerId]; delete ptr[e.pointerId];
+      if(p&&moved<8&&!Object.keys(ptr).length){ var r=svg.getBoundingClientRect(); tap(e.clientX-r.left,e.clientY-r.top); }
+    });
+    svg.addEventListener('pointercancel',function(e){ delete ptr[e.pointerId]; });
+    function zb(label,fn){ return h('button',{class:'btn sm',type:'button','aria-label':label,on:{click:fn}},label); }
+    box.appendChild(h('div',{class:'mapbtns'},
+      zb('+',function(){ V.k/=1.6; draw(); }), zb('\u2212',function(){ V.k*=1.6; draw(); }),
+      zb('Pins',function(){ fit(); draw(); }), zb('World',function(){ V={cx:180,cy:71,k:kmax}; draw(); })));
+    mapRedraw=function(){ if(!box.isConnected) return; fit(); draw(); };
+    fit(); draw();
+    loadWorld().then(function(d){ land.setAttribute('d',d); }).catch(function(){ note.textContent='The world outline needs an internet connection once. Pins still work.'; });
+    if(cities.some(function(t){ return !t.sample&&typeof t.lat!=='number'&&t.geo!=='none'; })){
+      note.textContent='Placing pins from the city names\u2026 this needs an internet connection.';
+      geocodeAll().then(function(){ if(note.isConnected&&/^Placing/.test(note.textContent)) note.textContent=''; });
+    } else if(!cities.length) note.textContent='Add a city to see its pin here.';
+  }
+
+  /* places, captions, backup */
+  var CATS=[['stay','Where I stayed'],['eat','Where I ate'],['see','What to see']];
+  function twoStep(a,b,fn){
+    var btn=h('button',{class:'btn quiet sm',type:'button'},a), tm;
+    btn.addEventListener('click',function(){
+      if(btn.dataset.s){ clearTimeout(tm); fn(); return; }
+      btn.dataset.s='1'; btn.textContent=b; btn.className='btn danger sm';
+      tm=setTimeout(function(){ delete btn.dataset.s; btn.textContent=a; btn.className='btn quiet sm'; },3000);
+    });
+    return btn;
+  }
+  function placesBlock(g,c,t){
+    t.places=t.places||{};
+    g.appendChild(sec('Places'));
+    CATS.forEach(function(k){
+      var arr=t.places[k[0]]||[];
+      g.appendChild(h('div',{class:'label',style:'margin-top:12px'},k[1]));
+      arr.forEach(function(p,i){
+        g.appendChild(h('div',{class:'pl'},
+          h('div',{class:'grow'},h('b',null,p.n),p.note?h('div',{class:'note'},p.note):null),
+          h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.n+', '+t.name+', '+c.name),target:'_blank',rel:'noopener'},'Maps'),
+          t.sample?null:twoStep('Remove','Sure?',function(){ arr.splice(i,1); t.places[k[0]]=arr; saveData().then(render); })));
+      });
+      if(!t.sample) g.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn sm',type:'button',on:{click:function(){openPlace(t,k)}}},'+ Add')));
+    });
+  }
+  function openPlace(t,k){
+    var p=$('#panel'); p.textContent='';
+    var f=h('form',{style:'display:flex;flex-direction:column;gap:14px'}), a=h('input',{id:'f-pn',type:'text',autocomplete:'off'}), b=h('input',{id:'f-pt',type:'text',autocomplete:'off',placeholder:'Optional'});
+    f.appendChild(h('h2',null,k[1]));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-pn'},'Name'),a));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-pt'},'Note'),b));
+    f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'submit'},'Save'),h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    f.addEventListener('submit',function(e){
+      e.preventDefault(); var n=a.value.trim(); if(!n){ a.focus(); return; }
+      t.places=t.places||{}; (t.places[k[0]]=t.places[k[0]]||[]).push({n:n,note:b.value.trim()});
+      saveData().then(function(){ closeSheet(); render(); });
+    });
+    p.appendChild(f); openSheet();
+  }
+  function capInput(t,p){
+    var i=h('input',{type:'text',class:'cap',placeholder:'Add a caption','aria-label':'Caption',value:p.caption||''});
+    i.addEventListener('change',function(){ p.caption=i.value.trim(); saveData(); });
+    return i;
+  }
+  function backupBlock(){
+    var d=h('div',{class:'gallery'});
+    d.appendChild(sec('Backup'));
+    d.appendChild(h('p',{class:'note'},lastBackup?'Last backup: '+fmt(lastBackup):'No backup yet. Export one to keep your notes and photos safe.'));
+    d.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:exportBackup}},'Export backup'),h('button',{class:'btn',type:'button',on:{click:restoreBackup}},'Restore')));
+    return d;
+  }
+  function exportBackup(){
+    if(isSample){ say('Add your own places first. There is nothing to back up yet.'); return; }
+    var parts=['{"app":"travel","v":1,"countries":'+JSON.stringify(countries)+',"cities":'+JSON.stringify(cities)+',"photos":{'], first=true, pr=Promise.resolve(), refs=0, nSaved=0;
+    cities.forEach(function(t){ (t.photos||[]).forEach(function(q){
+      refs++; pr=pr.then(function(){ return getPhoto(q.id); }).then(function(data){ if(!data) return; nSaved++; parts.push((first?'':',')+JSON.stringify(q.id)+':'+JSON.stringify(data)); first=false; });
+    }); });
+    pr.then(function(){
+      parts.push('}}');
+      var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(parts,{type:'application/json'})); a.download='travel-backup-'+today()+'.json';
+      document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },5000);
+      lastBackup=today(); put('lastBackup',lastBackup).then(function(){ render(); say('Backup saved with '+nSaved+' of '+refs+' photos.'+(nSaved<refs?' '+(refs-nSaved)+' photos are missing on this phone and could not be included.':'')); });
+    });
+  }
+  function putRetry(k,v,n){
+    return put(k,v).then(function(ok){ if(ok||n<=1) return ok; return new Promise(function(r){ setTimeout(r,300); }).then(function(){ return putRetry(k,v,n-1); }); });
+  }
+  function restoreBackup(){
+    var inp=h('input',{type:'file',accept:'.json,application/json','aria-label':'Choose backup file'}); document.body.appendChild(inp);
+    inp.addEventListener('change',function(){
+      var f=inp.files&&inp.files[0]; document.body.removeChild(inp); if(!f) return;
+      var r=new FileReader();
+      r.onload=function(){ var d; try{ d=JSON.parse(r.result); }catch(e){ d=null; }
+        if(!d||!Array.isArray(d.countries)||!Array.isArray(d.cities)){ say('That file is not a Travel backup.'); return; }
+        restoreSheet(d); };
+      r.onerror=function(){ say('Could not read that file.'); };
+      r.readAsText(f);
+    });
+    inp.click();
+  }
+  function restoreSheet(d){
+    var p=$('#panel'); p.textContent='';
+    p.appendChild(h('h2',null,'Restore backup'));
+    p.appendChild(h('p',{class:'note'},plural(d.countries.length,'country','countries')+', '+plural(d.cities.length,'city','cities')+', '+plural(Object.keys(d.photos||{}).length,'photo','photos')+' in this file.'));
+    function apply(replace){
+      var jobs=Promise.resolve(), tot=0, okN=0, bad=0, missing=0;
+      try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+      if(replace){ cities.forEach(function(t){ (t.photos||[]).forEach(function(q){ photoCache[q.id]=null; jobs=jobs.then(function(){ return drop('photo:'+q.id); }); }); }); countries=[]; cities=[]; }
+      else if(isSample){ countries=[]; cities=[]; }
+      isSample=false; $('#notice').dataset.msg=''; $('#notice').hidden=true;
+      var hc={}, ht={}; countries.forEach(function(c){hc[c.id]=1}); cities.forEach(function(t){ht[t.id]=1});
+      d.countries.forEach(function(c){ if(!hc[c.id]) countries.push(c); });
+      d.cities.forEach(function(t){ if(ht[t.id]) return; cities.push(t);
+        (t.photos||[]).forEach(function(q){ var data=(d.photos||{})[q.id]; if(!data){ missing++; return; } tot++; jobs=jobs.then(function(){ photoCache[q.id]=data; return putRetry('photo:'+q.id,data,3).then(function(ok){ if(ok) okN++; else bad++; }); }); }); });
+      jobs.then(saveData).then(function(){ closeSheet(); render();
+        var msg='Restored '+okN+' of '+(tot+missing)+' photos.'+(missing?' '+missing+' are not in the backup file.':'')+(bad?' '+bad+' could not be saved on this phone, try Restore again.':'');
+        if(bad&&navigator.storage&&navigator.storage.estimate) navigator.storage.estimate().then(function(e){ say(msg+' Storage used: '+Math.round(e.usage/1e6)+' of '+Math.round(e.quota/1e6)+' MB.'); }); else say(msg); });
+    }
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:function(){apply(false)}}},'Merge with what I have'),h('button',{class:'btn danger',type:'button',on:{click:function(){apply(true)}}},'Replace everything')));
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    openSheet();
+  }
+
+  /* views */
+  function renderCounts(){
+    $('#counts').textContent=plural(countries.length,'country','countries');
+    $('#subcounts').textContent=plural(cities.length,'city','cities');
+  }
+  function renderIndex(v){
+    var q=state.q.trim().toLowerCase();
+    var rows=countries.map(function(c){
+      var cs=cityList(c.id);
+      return {c:c,cs:cs,hit:q?cs.filter(function(x){return x.name.toLowerCase().indexOf(q)>-1}):[]};
+    }).filter(function(r){ return !q||r.c.name.toLowerCase().indexOf(q)>-1||r.hit.length; })
+      .sort(function(a,b){return byName(a.c,b.c)});
+    if(!rows.length){ v.appendChild(h('p',{class:'empty'},countries.length?'Nothing matches this search.':'No countries yet. Tap Add to start.')); return; }
+    var ul=h('ul',{class:'list'}), last='';
+    rows.forEach(function(r){
+      var L=letterOf(r.c.name);
+      if(L!==last){ last=L; ul.appendChild(h('li',{class:'letter','aria-hidden':'true'},L)); }
+      var nameHit=!q||r.c.name.toLowerCase().indexOf(q)>-1;
+      var n=r.cs.length;
+      ul.appendChild(h('li',null,h('button',{class:'row',type:'button',on:{click:function(){go('#c/'+encodeURIComponent(r.c.id))}}},
+        h('span',{class:'grow'},
+          h('span',{class:'cname',style:'display:block'},fl(r.c.name)+r.c.name),
+          (!nameHit&&r.hit.length)?h('span',{class:'sci',style:'display:block'},r.hit.map(function(x){return x.name}).join(', ')):null),
+        h('span',{class:'meta cnt'+(n?'':' none')},n?plural(n,'city','cities'):'No cities'),
+        h('span',{class:'chev','aria-hidden':'true'},'\u203a'))));
+    });
+    v.appendChild(ul);
+  }
+
+  /* inline "are you sure" for deletes */
+  function confirmRow(label,yesLabel,onYes){
+    var row=h('div',{class:'btnrow'});
+    function first(){
+      row.textContent='';
+      row.appendChild(h('button',{class:'btn danger',type:'button',on:{click:function(){
+        row.textContent='';
+        row.appendChild(h('button',{class:'btn danger',type:'button',on:{click:onYes}},yesLabel));
+        row.appendChild(h('button',{class:'btn quiet',type:'button',on:{click:first}},'Keep it'));
+      }}},label));
+    }
+    first(); return row;
+  }
+
+  function renderCountry(v,c){
+    var cs=cityList(c.id), np=0; if(state.sort==='date') cs.sort(function(a,b){return (b.visited||'').localeCompare(a.visited||'')}); cs.forEach(function(t){np+=(t.photos||[]).length});
+    var g=h('div',{class:'gallery'});
+    g.appendChild(h('a',{class:'back',href:'#'},'\u2190 All countries'));
+    g.appendChild(h('div',null,h('h2',{class:'gtitle'},fl(c.name)+c.name)));
+    g.appendChild(h('p',{class:'note'},plural(cs.length,'city','cities')+' \u00b7 '+plural(np,'photo','photos')));
+    if(c.sample){
+      g.appendChild(h('p',{class:'note'},'This is a sample entry. It disappears when you add your first country.'));
+    } else {
+      g.appendChild(h('div',{class:'btnrow'},
+        h('button',{class:'btn solid',type:'button',on:{click:function(){openAdd({country:c.name})}}},'Add city'),
+        h('button',{class:'btn',type:'button',on:{click:function(){
+          openRename('Rename country',c.name,function(val){ c.name=val; return saveData(); });
+        }}},'Rename')));
+    }
+    g.appendChild(sec('Cities'));
+    if(cs.length>1) g.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet sm',type:'button',on:{click:function(){state.sort=state.sort==='date'?'az':'date';render();}}},state.sort==='date'?'Sorted by date visited':'Sorted A to Z')));
+    if(!cs.length) g.appendChild(h('p',{class:'note'},'No cities yet. Tap Add city.'));
+    var grid=h('div',{class:'cards'});
+    cs.forEach(function(t){
+      var n=(t.photos||[]).length;
+      grid.appendChild(h('button',{class:'card',type:'button',on:{click:function(){go('#c/'+encodeURIComponent(c.id)+'/'+encodeURIComponent(t.id))}}},
+        pic(coverOf(t),null,t.sample),
+        h('span',{class:'cname'},t.name),
+        h('span',{class:'meta'},(t.visited?fmtM(t.visited)+' \u00b7 ':'')+(n?plural(n,'photo','photos'):'No photos'))));
+    });
+    g.appendChild(grid);
+    if(!c.sample){
+      g.appendChild(confirmRow('Delete country','Yes, delete '+c.name+' and its cities',function(){
+        var jobs=[]; cs.forEach(function(t){ (t.photos||[]).forEach(function(p){ jobs.push(drop('photo:'+p.id)); photoCache[p.id]=null; }); });
+        cities=cities.filter(function(t){return t.cid!==c.id});
+        countries=countries.filter(function(x){return x.id!==c.id});
+        Promise.all(jobs).then(saveData).then(function(){ go('#'); });
+      }));
+    }
+    g.appendChild(h('a',{class:'back',href:'#'},'\u2190 All countries'));
+    v.appendChild(g);
+  }
+
+  function mapsUrl(t,c){
+    var q=(typeof t.lat==='number'&&typeof t.lng==='number')?t.lat+','+t.lng:encodeURIComponent(t.name+', '+((c&&c.name)||''));
+    return 'https://www.google.com/maps/search/?api=1&query='+q;
+  }
+  function renderCity(v,c,t){
+    var pics=t.photos||[];
+    var targets=pics.map(function(p){return {t:t,p:p}});
+    var backHref='#c/'+encodeURIComponent(c.id);
+    function again(){ closeSheet(); render(); }
+    var g=h('div',{class:'gallery'});
+    g.appendChild(h('a',{class:'back',href:backHref},'\u2190 '+c.name));
+    g.appendChild(h('div',null,h('h2',{class:'gtitle'},t.name),h('div',{class:'sci'},fl(c.name)+c.name)));
+    g.appendChild(h('p',{class:'note'},plural(pics.length,'photo','photos')));
+    g.appendChild(h('div',{class:'btnrow'},h('a',{class:'btn',href:mapsUrl(t,c),target:'_blank',rel:'noopener',style:'display:flex;align-items:center;justify-content:center;text-decoration:none'},'Open in Google Maps')));
+    if(t.sample){
+      g.appendChild(h('p',{class:'note'},'This is a sample entry. It disappears when you add your first country.'));
+    } else {
+      g.appendChild(h('div',{class:'btnrow'},
+        h('button',{class:'btn solid',type:'button',on:{click:function(){
+          pickPhotos(function(list){
+            var base=Date.now();
+            list.reduce(function(pr,data,i){
+              var id='p-'+base+'-'+i;
+              return pr.then(function(){return put('photo:'+id,data)}).then(function(){ photoCache[id]=data; t.photos=t.photos||[]; t.photos.push({id:id,date:today()}); });
+            },Promise.resolve()).then(saveData).then(function(){render()});
+          });
+        }}},'Add photos'),
+        h('button',{class:'btn',type:'button',on:{click:function(){
+          openRename('Rename city',t.name,function(val){ t.name=val; return saveData(); });
+        }}},'Rename')));
+      g.appendChild(confirmRow('Delete city','Yes, delete '+t.name,function(){
+        var jobs=(t.photos||[]).map(function(p){ photoCache[p.id]=null; return drop('photo:'+p.id); });
+        cities=cities.filter(function(x){return x.id!==t.id});
+        Promise.all(jobs).then(saveData).then(function(){ go(backHref); });
+      }));
+    }
+
+    g.appendChild(sec('About this place'));
+    if(t.sample){
+      g.appendChild(h('p',{class:'note'},t.desc||''));
+    } else {
+      var ta=h('textarea',{class:'notes',rows:'6','aria-label':'Description of '+t.name,placeholder:'What it was like, where you stayed, what to eat\u2026'});
+      ta.value=t.desc||'';
+      var st=h('p',{class:'note'},''), tmr=null;
+      var saveDesc=function(){ t.desc=ta.value; saveData().then(function(){ st.textContent='Saved'; }); };
+      ta.addEventListener('input',function(){ st.textContent=''; clearTimeout(tmr); tmr=setTimeout(function(){tmr=null;saveDesc();},500); });
+      ta.addEventListener('blur',function(){ if(tmr){ clearTimeout(tmr); tmr=null; saveDesc(); } });
+      g.appendChild(ta); g.appendChild(st);
+    }
+
+    g.appendChild(sec('Visited'));
+    if(t.sample){ g.appendChild(h('p',{class:'note'},t.visited?fmtM(t.visited):'Not set')); }
+    else { var vi=h('input',{type:'month',value:t.visited||'','aria-label':'Month visited'}); vi.addEventListener('change',function(){ t.visited=vi.value; saveData(); }); g.appendChild(h('div',{class:'field'},vi)); }
+    g.appendChild(sec('Photos'));
+    if(!pics.length) g.appendChild(h('p',{class:'note'},t.sample?'Photos you add will show here.':'No photos yet. Tap Add photos.'));
+    var gal=h('div',{class:'gal'});
+    pics.forEach(function(p,i){
+      var target=targets[i], act=h('div',{class:'gact'});
+      function ask(){
+        act.textContent=''; act.className='gact';
+        act.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ cropPicture(target,again); }}},'Crop'));
+        var rm=h('button',{class:'btn quiet sm',type:'button'},'Remove');
+        rm.addEventListener('click',function(){
+          act.textContent=''; act.className='gact stack';
+          act.appendChild(h('button',{class:'btn danger sm',type:'button',on:{click:function(){ removePhoto(t,p); }}},'Yes, remove'));
+          act.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:ask}},'Keep'));
+        });
+        act.appendChild(rm);
+      }
+      ask();
+      var isCover=(coverOf(t)||{}).id===p.id;
+      var coverBtn=h('button',{class:'btn sm'+(isCover?' solid':''),type:'button',on:{click:function(){
+        if(isCover) return; t.cover=p.id; saveData().then(function(){render()});
+      }}},isCover?'Cover photo':'Use as cover');
+      if(isCover) coverBtn.setAttribute('aria-pressed','true');
+      gal.appendChild(h('div',{class:'gitem'},
+        pic(p,function(){ openLightbox(target,again,targets,i); }),
+        h('span',{class:'meta'},fmt(p.date)),
+        capInput(t,p),
+        coverBtn,act));
+    });
+    g.appendChild(gal);
+
+    g.appendChild(h('a',{class:'back',href:backHref},'\u2190 '+c.name));
+    v.appendChild(g);
+  }
+
+  function removePhoto(t,p){
+    t.photos=(t.photos||[]).filter(function(x){return x.id!==p.id});
+    if(t.cover===p.id) delete t.cover;
+    photoCache[p.id]=null;
+    drop('photo:'+p.id).then(saveData).then(function(){render()});
+  }
+
+  function render(){
+    renderCounts();
+    var c=state.c?countryOf(state.c):null, t=(c&&state.t)?cityOf(state.t):null;
+    if((state.c&&!c)||(state.t&&(!t||t.cid!==c.id))){
+      if(!ready) return;
+      state.c=state.t=null; c=t=null; if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+    }
+    if(!state.map) destroyMap();
+    var v=$('#view'); v.textContent='';
+    $('#tools').hidden=!!c||state.map;
+    $('#tab-index').setAttribute('aria-pressed',String(!c&&!state.map)); $('#tab-map').setAttribute('aria-pressed',String(!!state.map));
+    if(state.map) renderMap(v); else if(t) renderCity(v,c,t); else if(c) renderCountry(v,c); else { renderIndex(v); v.appendChild(syncBlock()); v.appendChild(backupBlock()); }
+    var nb=$('#notice');
+    if(!isSample && nb.dataset.sample){ delete nb.dataset.sample; if(!nb.dataset.msg){ nb.hidden=true; nb.textContent=''; } }
+    if(isSample && !nb.dataset.msg){ nb.dataset.sample='1'; nb.hidden=false; nb.textContent=''; nb.appendChild(h('span',null,h('b',null,'Sample entries. '),'These show how the index looks. Tap Add to start your own list; the samples disappear.')); }
+  }
+
+  /* sheet */
+  function closeSheet(){ $('#overlay').hidden=true; $('#panel').textContent=''; }
+  function openSheet(){ $('#overlay').hidden=false; var f=$('#panel').querySelector('input,button'); if(f) f.focus(); }
+  $('#overlay').addEventListener('click',function(e){ if(e.target===this) closeSheet(); });
+  document.addEventListener('keydown',function(e){ if(e.key!=='Escape') return; if(!$('#lb').hidden) closeLb(); else if(!$('#overlay').hidden) closeSheet(); });
+
+  /* photos: shrink big phone pictures before keeping them */
+  function shrink(file){
+    return new Promise(function(res,rej){
+      var url=URL.createObjectURL(file), im=new Image();
+      im.onload=function(){
+        var m=1400, s=Math.min(1,m/Math.max(im.width,im.height));
+        var c=document.createElement('canvas'); c.width=Math.round(im.width*s); c.height=Math.round(im.height*s);
+        c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',0.82));
+      };
+      im.onerror=function(){URL.revokeObjectURL(url); rej(new Error('image'))};
+      im.src=url;
+    });
+  }
+  function pickPhotos(cb){
+    var inp=h('input',{type:'file',accept:'image/*',multiple:'multiple','aria-label':'Choose photos'});
+    document.body.appendChild(inp);
+    inp.addEventListener('change',function(){
+      var fs=Array.prototype.slice.call(inp.files||[]); document.body.removeChild(inp);
+      if(!fs.length) return;
+      var out=[], bad=0;
+      fs.reduce(function(p,f){ return p.then(function(){ return shrink(f).then(function(d){out.push(d)},function(){bad++}); }); },Promise.resolve())
+        .then(function(){ if(bad) say(bad+(bad===1?' file':' files')+' could not be read as a photo.'); if(out.length) cb(out); });
+    });
+    inp.click();
+  }
+
+  /* zoom (lightbox) */
+  var lbState={target:null,back:null,list:[],idx:0};
+  function closeLb(){ $('#lb').hidden=true; $('#lb').classList.remove('zoomed'); $('#lbimg').removeAttribute('src'); }
+  function toggleZoom(){
+    var lb=$('#lb'), sc=$('#lbscroll'); lb.classList.toggle('zoomed');
+    if(lb.classList.contains('zoomed')){ setTimeout(function(){ sc.scrollLeft=(sc.scrollWidth-sc.clientWidth)/2; sc.scrollTop=(sc.scrollHeight-sc.clientHeight)/2; },30); }
+    else { sc.scrollLeft=0; sc.scrollTop=0; }
+  }
+  function showLb(i){
+    var L=lbState.list; if(!L.length) return;
+    i=(i+L.length)%L.length; lbState.idx=i; lbState.target=L[i];
+    $('#lbcount').textContent=(L.length>1?(i+1)+' / '+L.length:'')+(L[i].p.caption?(L.length>1?'  \u00b7  ':'')+L[i].p.caption:'');
+    $('#lbprev').hidden=L.length<2; $('#lbnext').hidden=L.length<2;
+    getPhoto(L[i].p.id).then(function(src){
+      if(!src||lbState.idx!==i) return;
+      $('#lb').classList.remove('zoomed'); $('#lbimg').src=src; $('#lb').hidden=false; $('#lbclose').focus();
+    });
+  }
+  function openLightbox(t,back,list,idx){
+    lbState.back=back; lbState.list=(list&&list.length)?list:[t]; showLb((list&&list.length)?(idx||0):0);
+  }
+  $('#lbclose').addEventListener('click',closeLb);
+  $('#lbimg').addEventListener('click',toggleZoom);
+  $('#lbzoom').addEventListener('click',toggleZoom);
+  $('#lbprev').addEventListener('click',function(){ showLb(lbState.idx-1); });
+  $('#lbnext').addEventListener('click',function(){ showLb(lbState.idx+1); });
+  $('#lbcrop').addEventListener('click',function(){ var t=lbState.target, b=lbState.back; closeLb(); if(t) cropPicture(t,b); });
+  (function(){
+    var sx=null, sy=null, box=$('#lbscroll');
+    box.addEventListener('touchstart',function(e){
+      if($('#lb').classList.contains('zoomed')||e.touches.length!==1){ sx=null; return; }
+      sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    },{passive:true});
+    box.addEventListener('touchend',function(e){
+      if(sx===null) return;
+      var t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy; sx=null;
+      if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) showLb(lbState.idx+(dx<0?1:-1));
+    },{passive:true});
+    document.addEventListener('keydown',function(e){
+      if($('#lb').hidden) return;
+      if(e.key==='ArrowRight') showLb(lbState.idx+1); else if(e.key==='ArrowLeft') showLb(lbState.idx-1);
+    });
+  })();
+
+  /* crop: drag and zoom, then keep only the visible part */
+  function cropPicture(t,back){
+    var p=$('#panel'); p.textContent='';
+    var z=1, px=0, py=0, loaded=null;
+    var frame=h('div',{class:'cropframe'}), im=new Image(); im.alt=''; im.draggable=false;
+    frame.appendChild(im);
+    var slider=h('input',{id:'crop-z',type:'range',min:'1',max:'4',step:'0.02',value:'1','aria-label':'Zoom'});
+    var msg=h('p',{class:'note'},'Drag the picture to move it. Use the slider to zoom in. Save crop keeps only this part of the picture.');
+    function limit(){ var m=(z-1)/2; px=Math.max(-m,Math.min(m,px)); py=Math.max(-m,Math.min(m,py)); }
+    function apply(){ limit(); im.style.transform=cropCss({z:z,px:px,py:py}); }
+    var drag=null;
+    frame.addEventListener('pointerdown',function(e){ drag={x:e.clientX,y:e.clientY}; try{frame.setPointerCapture(e.pointerId)}catch(_){} frame.classList.add('grab'); });
+    frame.addEventListener('pointermove',function(e){
+      if(!drag) return; var r=frame.getBoundingClientRect();
+      px+=(e.clientX-drag.x)/r.width; py+=(e.clientY-drag.y)/r.height; drag={x:e.clientX,y:e.clientY}; apply();
+    });
+    function end(){ drag=null; frame.classList.remove('grab'); }
+    frame.addEventListener('pointerup',end); frame.addEventListener('pointercancel',end);
+    slider.addEventListener('input',function(){ z=parseFloat(slider.value); apply(); });
+    getPhoto(t.p.id).then(function(src){
+      if(!src){ msg.textContent='This picture could not be loaded.'; return; }
+      var img=new Image(); img.onload=function(){ loaded=img; im.src=src; apply(); }; img.onerror=function(){ msg.textContent='This picture could not be loaded.'; }; img.src=src;
+    });
+    function bake(){
+      var W=frame.clientWidth, H=frame.clientHeight, img=loaded, w=img.naturalWidth, h2=img.naturalHeight;
+      var s0=Math.max(W/w,H/h2), vw=W/(s0*z), vh=H/(s0*z);
+      var cx=w/2-(px*W)/(s0*z), cy=h2/2-(py*H)/(s0*z);
+      var sx=Math.max(0,Math.min(w-vw,cx-vw/2)), sy=Math.max(0,Math.min(h2-vh,cy-vh/2));
+      var ow=Math.min(1400,Math.round(vw)), oh=Math.round(ow*vh/vw);
+      var cv=document.createElement('canvas'); cv.width=ow; cv.height=oh;
+      cv.getContext('2d').drawImage(img,sx,sy,vw,vh,0,0,ow,oh);
+      return cv.toDataURL('image/jpeg',0.88);
+    }
+    function save(){
+      if(!loaded) return;
+      if(z<=1.001){ back(); return; }
+      var data=null; try{ data=bake(); }catch(e){ data=null; }
+      if(!data){ msg.textContent='The picture could not be cropped.'; return; }
+      put('photo:'+t.p.id,data).then(function(){ photoCache[t.p.id]=data; render(); back(); });
+    }
+    p.appendChild(h('h2',null,'Crop picture'));
+    p.appendChild(msg);
+    p.appendChild(frame);
+    p.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'crop-z'},'Zoom'),slider));
+    p.appendChild(h('div',{class:'btnrow'},
+      h('button',{class:'btn solid',type:'button',on:{click:save}},'Save crop'),
+      h('button',{class:'btn',type:'button',on:{click:function(){ z=1;px=0;py=0;slider.value='1';apply(); }}},'Reset'),
+      h('button',{class:'btn quiet',type:'button',on:{click:function(){ back(); }}},'Cancel')));
+    openSheet();
+  }
+
+  /* rename sheet */
+  function openRename(title,current,apply){
+    var p=$('#panel'); p.textContent='';
+    var f=h('form',{style:'display:flex;flex-direction:column;gap:14px'});
+    var inp=h('input',{id:'f-rename',type:'text',autocomplete:'off',value:current});
+    f.appendChild(h('h2',null,title));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-rename'},'Name'),inp));
+    f.appendChild(h('div',{class:'btnrow'},
+      h('button',{class:'btn solid',type:'submit'},'Save'),
+      h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    f.addEventListener('submit',function(e){
+      e.preventDefault(); var val=inp.value.trim(); if(!val){ inp.focus(); return; }
+      Promise.resolve(apply(val)).then(function(){ closeSheet(); render(); });
+    });
+    p.appendChild(f); openSheet();
+  }
+
+  /* add a country, a city, a description and photos in one go */
+  function openAdd(pre){
+    pre=pre||{};
+    var p=$('#panel'); p.textContent='';
+    var photoData=[];
+    var status=h('p',{class:'note'},'No photos chosen yet.');
+    var f=h('form',{style:'display:flex;flex-direction:column;gap:14px'});
+    var dl=h('datalist',{id:'dl-countries'});
+    countries.filter(function(c){return !c.sample}).sort(byName).forEach(function(c){ dl.appendChild(h('option',{value:c.name})); });
+    var inC=h('input',{id:'f-country',type:'text',autocomplete:'off',list:'dl-countries',value:pre.country||''});
+    var inT=h('input',{id:'f-city',type:'text',autocomplete:'off'});
+    var ta=h('textarea',{id:'f-desc',class:'notes',rows:'3',placeholder:'Optional'});
+    f.appendChild(h('h2',null,pre.country?'Add a city':'Add a place'));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-country'},'Country'),inC,dl));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-city'},'City (optional)'),inT));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-desc'},'Description'),ta));
+    f.appendChild(h('div',{class:'btnrow'},
+      h('button',{class:'btn',type:'button',on:{click:function(){ pickPhotos(function(d){ photoData=photoData.concat(d); status.textContent=plural(photoData.length,'photo','photos')+' ready.'; }); }}},'Choose photos'),status));
+    f.appendChild(h('div',{class:'btnrow'},
+      h('button',{class:'btn solid',type:'submit'},'Save'),
+      h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var cn=inC.value.trim(), tn=inT.value.trim(), desc=ta.value.trim();
+      if(!cn){ status.textContent='Enter a country first.'; inC.focus(); return; }
+      if(!tn&&(photoData.length||desc)){ status.textContent='Photos and a description belong to a city. Enter a city name.'; inT.focus(); return; }
+      if(isSample){ countries=[]; cities=[]; isSample=false; $('#notice').dataset.msg=''; $('#notice').hidden=true; }
+      var c=countries.filter(function(x){return x.name.toLowerCase()===cn.toLowerCase()})[0];
+      if(!c){ c={id:uid('c'),name:cn}; countries.push(c); }
+      var t=null;
+      if(tn){
+        t=cities.filter(function(x){return x.cid===c.id&&x.name.toLowerCase()===tn.toLowerCase()})[0];
+        if(!t){ t={id:uid('t'),cid:c.id,name:tn,desc:'',photos:[]}; cities.push(t); }
+        if(desc) t.desc=t.desc?t.desc+'\n\n'+desc:desc;
+      }
+      var base=Date.now();
+      photoData.reduce(function(pr,data,i){
+        var id='p-'+base+'-'+i;
+        return pr.then(function(){return put('photo:'+id,data)}).then(function(){ photoCache[id]=data; t.photos=t.photos||[]; t.photos.push({id:id,date:today()}); });
+      },Promise.resolve()).then(saveData).then(function(){
+        closeSheet();
+        go('#c/'+encodeURIComponent(c.id)+(t?'/'+encodeURIComponent(t.id):''));
+      });
+    });
+    p.appendChild(f); openSheet();
+  }
+  $('#tab-map').addEventListener('click',function(){ go('#map'); });
+  $('#add').addEventListener('click',function(){
+    var c=state.c?countryOf(state.c):null;
+    openAdd(c&&!c.sample?{country:c.name}:null);
+  });
+
+  $('#q').addEventListener('input',function(){state.q=this.value;render()});
+  $('#tab-index').addEventListener('click',function(){ if(location.hash&&location.hash!=='#') location.hash=''; else { route(false); } });
+
+  /* start with the samples, then use saved data if there is any */
+  countries=SAMPLE_C.map(function(x){return Object.assign({},x)});
+  cities=SAMPLE_T.map(function(x){return Object.assign({},x)});
+  isSample=true; route(true);
+  Promise.all([get('countries'),get('cities'),get('lastBackup'),get('sync'),get('tomb')]).then(function(r){ lastBackup=r[2]||''; sy=r[3]||sy; tomb=r[4]||{};
+    if(Array.isArray(r[0])){ countries=r[0]; cities=Array.isArray(r[1])?r[1]:[]; isSample=false; }
+    initJ(); ready=true; route(true); setTimeout(function(){ syncNow(true); },1500);
+  });
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+</script>
+</body>
+</html>
