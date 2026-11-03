@@ -213,6 +213,17 @@ body.mapmode{padding:0}
 .maplibregl-ctrl-group{border-radius:0!important;box-shadow:0 2px 8px rgba(31,28,24,.25)!important}
 .maplibregl-ctrl-top-right{top:calc(10px + env(safe-area-inset-top,0px));right:10px}
 .maplibregl-ctrl-attrib{font-size:10px}
+#spot{position:fixed;inset:0;z-index:40;background:#E9E5DC}
+.sp-map{position:absolute;inset:0}
+#spot .sp-map{width:100%;height:100%}
+.sp-top{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;right:58px;z-index:2}
+.sp-foot{position:absolute;left:0;right:0;bottom:0;z-index:2;background:var(--paper);border-top:2px solid var(--gold);padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.sp-hint{font-family:var(--serif);font-style:italic;color:var(--muted);text-align:center;font-size:16px}
+.sp-foot .btnrow{display:flex;gap:8px}.sp-foot .btnrow .btn{flex:1}
+.btn[disabled]{opacity:.4}
+.pbox{display:flex;flex-direction:column;gap:6px}
+.pdesc{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.pbox .btn{padding:10px 6px;letter-spacing:.08em}
 .mapbtns{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
 .mapcard{display:flex;gap:10px;align-items:center;padding:12px 0}
 .pl{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(169,140,85,.35)}
@@ -2141,6 +2152,121 @@ window.qrcode=function(type,ecl){
     });
     p.appendChild(f); openSheet();
   }
+  /* ---- where was this photo taken: a description and one saved spot ---- */
+  function parseSpot(s){
+    s=(s||'').trim(); if(!s) return null;
+    var d; try{ d=decodeURIComponent(s); }catch(e){ d=s; }
+    function ok(a,b){ a=+a; b=+b; return isFinite(a)&&isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180?{lat:a,lng:b}:null; }
+    var N='(-?\\d+(?:\\.\\d+)?)', m;
+    if((m=new RegExp('!3d'+N+'!4d'+N).exec(d))) return ok(m[1],m[2]);
+    if((m=new RegExp('@'+N+','+N).exec(d))) return ok(m[1],m[2]);
+    if((m=new RegExp('[?&](?:q|query|ll|destination|center)='+N+'[, +]'+N).exec(d))) return ok(m[1],m[2]);
+    if((m=new RegExp('^\\s*'+N+'\\s*[,;\\s]\\s*'+N+'\\s*$').exec(d))) return ok(m[1],m[2]);
+    return null;
+  }
+  function hasSpot(p){ return !!(p.place&&typeof p.place.lat==='number'&&typeof p.place.lng==='number'); }
+  function spotUrl(t,c,p){
+    if(hasSpot(p)) return mapsUrl({lat:p.place.lat,lng:p.place.lng},c);
+    return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(((p.place&&p.place.desc)||'')+', '+t.name+', '+((c&&c.name)||''));
+  }
+  var mapsLinkStyle='display:flex;align-items:center;justify-content:center;text-decoration:none';
+  function placeBlock(t,c,p,prev){
+    var box=h('div',{class:'pbox'});
+    var desc=p.place&&p.place.desc;
+    if(desc) box.appendChild(h('div',{class:'pdesc'},desc));
+    if(hasSpot(p)) box.appendChild(h('a',{class:'btn sm solid',href:spotUrl(t,c,p),target:'_blank',rel:'noopener',style:mapsLinkStyle},'Google Maps'));
+    else box.appendChild(h('button',{class:'btn sm',type:'button',on:{click:function(){ openSpotPicker(t,c,p,function(){ render(); }); }}},'Map it'));
+    box.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ openWhere(t,c,p,prev); }}},desc||hasSpot(p)?'Edit place':'Where was this?'));
+    return box;
+  }
+  function openWhere(t,c,p,prev){
+    var panel=$('#panel'); panel.textContent='';
+    var inp=h('input',{type:'text',autocomplete:'off',placeholder:'Place name or a few words','aria-label':'Where was this?'}); inp.value=(p.place&&p.place.desc)||'';
+    var paste=h('input',{type:'text',autocomplete:'off',placeholder:'Paste a Google Maps link or 12.34, 56.78','aria-label':'Google Maps link or coordinates'});
+    var msg=h('p',{class:'note'},'');
+    function commit(){ var d=inp.value.trim(); p.place=p.place||{}; p.place.desc=d; if(!d&&!hasSpot(p)) delete p.place; }
+    function done(){ return saveData().then(function(){ closeSheet(); render(); }); }
+    panel.appendChild(h('h2',null,'Where was this?'));
+    panel.appendChild(h('div',{class:'field'},h('label',{class:'label'},'Description'),inp));
+    panel.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:function(){ commit(); done(); }}},'Save')));
+    panel.appendChild(h('div',{class:'label',style:'margin-top:6px'},'Spot on the map'));
+    if(hasSpot(p)){
+      panel.appendChild(h('p',{class:'note'},'A spot is saved for this photo.'));
+      panel.appendChild(h('div',{class:'btnrow'},
+        h('a',{class:'btn',href:spotUrl(t,c,p),target:'_blank',rel:'noopener',style:mapsLinkStyle},'Open in Google Maps'),
+        h('button',{class:'btn',type:'button',on:{click:function(){ commit(); closeSheet(); openSpotPicker(t,c,p,function(){ render(); }); }}},'Change the spot'),
+        h('button',{class:'btn danger',type:'button',on:{click:function(){ commit(); delete p.place.lat; delete p.place.lng; if(!p.place.desc) delete p.place; done(); }}},'Remove the spot')));
+    } else {
+      panel.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){ commit(); closeSheet(); openSpotPicker(t,c,p,function(){ render(); }); }}},'Set the spot on the map')));
+    }
+    if(prev&&(hasSpot(prev)||(prev.place&&prev.place.desc))){
+      panel.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet',type:'button',on:{click:function(){
+        p.place={desc:(prev.place&&prev.place.desc)||'',lat:prev.place&&prev.place.lat,lng:prev.place&&prev.place.lng};
+        if(typeof p.place.lat!=='number'){ delete p.place.lat; delete p.place.lng; }
+        done();
+      }}},'Same place as the photo before')));
+    }
+    panel.appendChild(h('div',{class:'label',style:'margin-top:6px'},'Or paste a link'));
+    panel.appendChild(h('div',{class:'field'},paste));
+    panel.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){
+      var v=paste.value.trim();
+      if(/goo\.gl|maps\.app/i.test(v)){ msg.textContent='Short links cannot be read. Open the link in Google Maps, then copy the address from the top of the page, or copy the coordinates.'; return; }
+      var s=parseSpot(v); if(!s){ msg.textContent='No location found in that text.'; return; }
+      commit(); p.place=p.place||{}; p.place.lat=s.lat; p.place.lng=s.lng; done();
+    }}},'Use this link')));
+    panel.appendChild(msg);
+    panel.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    openSheet();
+  }
+  function openSpotPicker(t,c,p,onSave){
+    var wrap=h('div',{id:'spot'}), mapEl=h('div',{class:'sp-map'}), top=h('div',{class:'sp-top'}), foot=h('div',{class:'sp-foot'});
+    var q=h('input',{class:'mf-search',type:'search',placeholder:'Search for the place',autocomplete:'off','aria-label':'Search for the place'}); q.value=(p.place&&p.place.desc)||'';
+    var list=h('div',{class:'mf-res'}); list.hidden=true;
+    var hint=h('div',{class:'sp-hint'},'Tap the map to set the spot'), saveBtn=h('button',{class:'btn solid',type:'button',disabled:'disabled'},'Save the spot');
+    var cancel=h('button',{class:'btn quiet',type:'button'},'Cancel');
+    top.appendChild(q); top.appendChild(list); foot.appendChild(hint); foot.appendChild(h('div',{class:'btnrow'},saveBtn,cancel));
+    wrap.appendChild(mapEl); wrap.appendChild(top); wrap.appendChild(foot); document.body.appendChild(wrap);
+    var map=null, marker=null, chosen=hasSpot(p)?{lat:p.place.lat,lng:p.place.lng}:null;
+    function close(){ try{ if(map) map.remove(); }catch(e){} wrap.remove(); }
+    cancel.addEventListener('click',close);
+    function setPoint(lat,lng,fly,zoom){
+      chosen={lat:lat,lng:lng}; saveBtn.disabled=false; saveBtn.removeAttribute('disabled'); hint.textContent='Drag the pin or tap elsewhere to adjust';
+      if(!marker) marker=new maplibregl.Marker({color:'#1F1C18',draggable:true}).setLngLat([lng,lat]).addTo(map); else marker.setLngLat([lng,lat]);
+      marker.on('dragend',function(){ var l=marker.getLngLat(); chosen={lat:l.lat,lng:l.lng}; });
+      if(fly) map.easeTo({center:[lng,lat],zoom:zoom||Math.max(map.getZoom(),14),duration:700});
+    }
+    saveBtn.addEventListener('click',function(){
+      if(!chosen) return; p.place=p.place||{}; p.place.lat=chosen.lat; p.place.lng=chosen.lng;
+      if(!p.place.desc&&q.value.trim()) p.place.desc=q.value.trim();
+      saveData().then(function(){ close(); if(onSave) onSave(); });
+    });
+    function search(){
+      var term=q.value.trim(); if(!term) return; list.textContent=''; list.hidden=false; list.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'Searching…'));
+      var base='https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=en&q=';
+      function get(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }); }
+      get(base+encodeURIComponent(term+', '+t.name+', '+((c&&c.name)||''))).then(function(a){ return (Array.isArray(a)&&a.length)?a:get(base+encodeURIComponent(term)); }).then(function(a){
+        list.textContent='';
+        if(!Array.isArray(a)||!a.length){ list.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'Nothing found. Tap the map to set the spot.')); return; }
+        a.forEach(function(r){
+          list.appendChild(h('button',{type:'button',on:{click:function(){ list.hidden=true; setPoint(+r.lat,+r.lon,true,15); }}},h('span',null,(r.display_name||'').split(',').slice(0,3).join(','))));
+        });
+      }).catch(function(){ list.textContent=''; list.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'Search failed. Check your connection, or tap the map.')); });
+    }
+    q.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); search(); } });
+    top.appendChild(h('button',{class:'btn sm',type:'button',style:'margin-top:8px',on:{click:search}},'Search'));
+    Promise.all([loadMapLib(),mapStyleUrl()]).then(function(r){
+      if(!wrap.isConnected) return;
+      var start=chosen?[chosen.lng,chosen.lat]:(typeof t.lng==='number'?[t.lng,t.lat]:[0,20]), zoom=chosen?15:(typeof t.lng==='number'?10:1.6);
+      map=new maplibregl.Map({container:mapEl,style:r[1],center:start,zoom:zoom,attributionControl:false,dragRotate:false});
+      try{ map.touchZoomRotate.disableRotation(); }catch(e){}
+      map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+      map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+      map.on('click',function(e){ list.hidden=true; setPoint(e.lngLat.lat,e.lngLat.lng,false); });
+      map.on('load',function(){ if(chosen) setPoint(chosen.lat,chosen.lng,false); else if(q.value.trim()) search(); });
+    }).catch(function(){
+      wrap.remove(); say('The map needs an internet connection. You can paste a Google Maps link in "Where was this?" instead.');
+    });
+  }
   function capInput(t,p){
     var i=h('input',{type:'text',class:'cap',placeholder:'Add a caption','aria-label':'Caption',value:p.caption||''});
     i.addEventListener('change',function(){ p.caption=i.value.trim(); saveData(); });
@@ -2366,6 +2492,7 @@ window.qrcode=function(type,ecl){
         pic(p,function(){ openLightbox(target,again,targets,i); }),
         h('span',{class:'meta'},fmt(p.date)),
         capInput(t,p),
+        placeBlock(t,c,p,pics[i-1]),
         coverBtn,act));
     });
     g.appendChild(gal);
