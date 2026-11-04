@@ -2161,7 +2161,10 @@ window.qrcode=function(type,ecl){
     if((m=new RegExp('!3d'+N+'!4d'+N).exec(d))) return ok(m[1],m[2]);
     if((m=new RegExp('@'+N+','+N).exec(d))) return ok(m[1],m[2]);
     if((m=new RegExp('[?&](?:q|query|ll|destination|center)='+N+'[, +]'+N).exec(d))) return ok(m[1],m[2]);
-    if((m=new RegExp('^\\s*'+N+'\\s*[,;\\s]\\s*'+N+'\\s*$').exec(d))) return ok(m[1],m[2]);
+    if((m=new RegExp('^\\s*'+N+'\\s*\u00b0?\\s*([NSns])?\\s*[,;\\s]\\s*'+N+'\\s*\u00b0?\\s*([EWew])?\\s*$').exec(d))){
+      var la=+m[1], ln=+m[3]; if(/s/i.test(m[2]||'')) la=-Math.abs(la); if(/w/i.test(m[4]||'')) ln=-Math.abs(ln);
+      return ok(la,ln);
+    }
     return null;
   }
   function hasSpot(p){ return !!(p.place&&typeof p.place.lat==='number'&&typeof p.place.lng==='number'); }
@@ -2224,7 +2227,7 @@ window.qrcode=function(type,ecl){
     var wrap=h('div',{id:'spot'}), mapEl=h('div',{class:'sp-map'}), top=h('div',{class:'sp-top'}), foot=h('div',{class:'sp-foot'});
     var q=h('input',{class:'mf-search',type:'search',placeholder:'Search for the place',autocomplete:'off','aria-label':'Search for the place'}); q.value=(p.place&&p.place.desc)||'';
     var list=h('div',{class:'mf-res'}); list.hidden=true;
-    var hint=h('div',{class:'sp-hint'},'Tap the map to set the spot'), saveBtn=h('button',{class:'btn solid',type:'button',disabled:'disabled'},'Save the spot');
+    var hint=h('div',{class:'sp-hint'},'Tap a search result or the map to set the spot'), saveBtn=h('button',{class:'btn solid',type:'button',disabled:'disabled'},'Save the spot');
     var cancel=h('button',{class:'btn quiet',type:'button'},'Cancel');
     top.appendChild(q); top.appendChild(list); foot.appendChild(hint); foot.appendChild(h('div',{class:'btnrow'},saveBtn,cancel));
     wrap.appendChild(mapEl); wrap.appendChild(top); wrap.appendChild(foot); document.body.appendChild(wrap);
@@ -2243,7 +2246,9 @@ window.qrcode=function(type,ecl){
       saveData().then(function(){ close(); if(onSave) onSave(); });
     });
     function search(){
-      var term=q.value.trim(); if(!term) return; list.textContent=''; list.hidden=false; list.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'Searching…'));
+      var term=q.value.trim(); if(!term) return;
+      var xy=parseSpot(term); if(xy&&map){ list.hidden=true; setPoint(xy.lat,xy.lng,true,16); return; }
+      list.textContent=''; list.hidden=false; list.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'Searching…'));
       var base='https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=en&q=';
       function get(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }); }
       get(base+encodeURIComponent(term+', '+t.name+', '+((c&&c.name)||''))).then(function(a){ return (Array.isArray(a)&&a.length)?a:get(base+encodeURIComponent(term)); }).then(function(a){
