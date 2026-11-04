@@ -224,6 +224,8 @@ body.mapmode{padding:0}
 .pbox{display:flex;flex-direction:column;gap:6px}
 .pdesc{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;line-height:1.3;overflow-wrap:anywhere}
 .pbox .btn{padding:10px 6px;letter-spacing:.08em}
+.langtog{display:flex;gap:8px;justify-content:flex-end}
+.langtog .chip{min-width:56px;min-height:36px;padding:6px 12px}
 .mapbtns{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
 .mapcard{display:flex;gap:10px;align-items:center;padding:12px 0}
 .pl{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(169,140,85,.35)}
@@ -2424,6 +2426,38 @@ window.qrcode=function(type,ecl){
     var q=(typeof t.lat==='number'&&typeof t.lng==='number')?t.lat+','+t.lng:encodeURIComponent(t.name+', '+((c&&c.name)||''));
     return 'https://www.google.com/maps/search/?api=1&query='+q;
   }
+  /* ---- automatic French -> English translation of the "About this place" text ---- */
+  function trPieces(s,max){
+    var items=[], paras=s.split('\n');
+    paras.forEach(function(par,pi){
+      var sepEnd=pi===paras.length-1?'':'\n';
+      if(!par.trim()||par.length<=max){ items.push({t:par,s:sepEnd}); return; }
+      var parts=par.match(/[^.!?]+[.!?]+["')»”]*\s*|[^.!?]+$/g)||[par], cur='', segs=[];
+      parts.forEach(function(x){ if(cur&&(cur+x).length>max){ segs.push(cur); cur=x; } else cur+=x; });
+      if(cur) segs.push(cur);
+      segs.forEach(function(x,k){ items.push({t:x.trim(),s:k===segs.length-1?sepEnd:' '}); });
+    });
+    return items;
+  }
+  function trGoogle(q){
+    return fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=fr&tl=en&dt=t&q='+encodeURIComponent(q))
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(j){ if(!Array.isArray(j)||!Array.isArray(j[0])) throw new Error('bad'); return j[0].map(function(x){ return x&&x[0]?x[0]:''; }).join(''); });
+  }
+  function trMyMemory(q){
+    return trPieces(q,450).reduce(function(pr,it){ return pr.then(function(acc){
+      if(!it.t.trim()) return acc+it.t+it.s;
+      return fetch('https://api.mymemory.translated.net/get?langpair=fr%7Cen&q='+encodeURIComponent(it.t))
+        .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(j){ var o=j&&j.responseData&&j.responseData.translatedText; if(!o||(j.responseStatus&&+j.responseStatus!==200)) throw new Error('bad'); return acc+o+it.s; });
+    }); },Promise.resolve(''));
+  }
+  function translateFrEn(text){
+    return trPieces(text,1200).reduce(function(pr,it){ return pr.then(function(acc){
+      if(!it.t.trim()) return acc+it.t+it.s;
+      return trGoogle(it.t).catch(function(){ return trMyMemory(it.t); }).then(function(o){ return acc+o.replace(/\s+$/,'')+it.s; });
+    }); },Promise.resolve(''));
+  }
   function renderCity(v,c,t){
     var pics=t.photos||[];
     var targets=pics.map(function(p){return {t:t,p:p}});
@@ -2461,13 +2495,35 @@ window.qrcode=function(type,ecl){
     if(t.sample){
       g.appendChild(h('p',{class:'note'},t.desc||''));
     } else {
-      var ta=h('textarea',{class:'notes',rows:'6','aria-label':'Description of '+t.name,placeholder:'What it was like, where you stayed, what to eat\u2026'});
+      var PH='What it was like, where you stayed, what to eat\u2026', lang='fr', busy=0;
+      var ta=h('textarea',{class:'notes',rows:'6','aria-label':'Description of '+t.name,placeholder:PH});
       ta.value=t.desc||'';
       var st=h('p',{class:'note'},''), tmr=null;
       var saveDesc=function(){ t.desc=ta.value; saveData().then(function(){ st.textContent='Saved'; }); };
-      ta.addEventListener('input',function(){ st.textContent=''; clearTimeout(tmr); tmr=setTimeout(function(){tmr=null;saveDesc();},500); });
+      ta.addEventListener('input',function(){ if(lang!=='fr') return; st.textContent=''; clearTimeout(tmr); tmr=setTimeout(function(){tmr=null;saveDesc();},500); });
       ta.addEventListener('blur',function(){ if(tmr){ clearTimeout(tmr); tmr=null; saveDesc(); } });
-      g.appendChild(ta); g.appendChild(st);
+      var tog=h('div',{class:'langtog',role:'group','aria-label':'Language of the description'});
+      function show(l){
+        if(tmr){ clearTimeout(tmr); tmr=null; if(lang==='fr') saveDesc(); }
+        lang=l; busy++;
+        [].forEach.call(tog.children,function(b){ b.setAttribute('aria-pressed',String(b.dataset.l===l)); });
+        if(l==='fr'){ ta.readOnly=false; ta.value=t.desc||''; ta.placeholder=PH; st.textContent=''; return; }
+        ta.readOnly=true; ta.placeholder='Nothing to translate yet.';
+        if(!(t.desc||'').trim()){ ta.value=''; st.textContent=''; return; }
+        if(t.descEn&&t.descEnSrc===t.desc){ ta.value=t.descEn; st.textContent='Translated automatically from the French text.'; return; }
+        ta.value=''; st.textContent='Translating\u2026';
+        var token=busy, src=t.desc;
+        translateFrEn(src).then(function(en){
+          t.descEn=en; t.descEnSrc=src; saveData();
+          if(token===busy&&lang==='en'){ ta.value=en; st.textContent='Translated automatically from the French text.'; }
+        }).catch(function(){
+          if(token===busy&&lang==='en') st.textContent='Translation is not available right now. Check your internet connection, then tap FR and EN again.';
+        });
+      }
+      [['fr','FR'],['en','EN']].forEach(function(k){
+        var b=h('button',{class:'chip',type:'button','aria-pressed':String(k[0]==='fr'),on:{click:function(){ show(k[0]); }}},k[1]); b.dataset.l=k[0]; tog.appendChild(b);
+      });
+      g.appendChild(tog); g.appendChild(ta); g.appendChild(st);
     }
 
     g.appendChild(sec('Visited'));
