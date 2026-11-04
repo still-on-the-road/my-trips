@@ -2175,6 +2175,7 @@ window.qrcode=function(type,ecl){
     var desc=p.place&&p.place.desc;
     if(desc) box.appendChild(h('div',{class:'pdesc'},desc));
     if(hasSpot(p)) box.appendChild(h('a',{class:'btn sm solid',href:spotUrl(t,c,p),target:'_blank',rel:'noopener',style:mapsLinkStyle},'Google Maps'));
+    else if(desc) box.appendChild(h('a',{class:'btn sm solid',href:spotUrl(t,c,p),target:'_blank',rel:'noopener',style:mapsLinkStyle},'Google Maps'));
     else box.appendChild(h('button',{class:'btn sm',type:'button',on:{click:function(){ openSpotPicker(t,c,p,function(){ render(); }); }}},'Map it'));
     box.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ openWhere(t,c,p,prev); }}},desc||hasSpot(p)?'Edit place':'Where was this?'));
     return box;
@@ -2197,6 +2198,7 @@ window.qrcode=function(type,ecl){
         h('button',{class:'btn',type:'button',on:{click:function(){ commit(); closeSheet(); openSpotPicker(t,c,p,function(){ render(); }); }}},'Change the spot'),
         h('button',{class:'btn danger',type:'button',on:{click:function(){ commit(); delete p.place.lat; delete p.place.lng; if(!p.place.desc) delete p.place; done(); }}},'Remove the spot')));
     } else {
+      if(p.place&&p.place.desc) panel.appendChild(h('div',{class:'btnrow'},h('a',{class:'btn',href:spotUrl(t,c,p),target:'_blank',rel:'noopener',style:mapsLinkStyle},'Search in Google Maps')));
       panel.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){ commit(); closeSheet(); openSpotPicker(t,c,p,function(){ render(); }); }}},'Set the spot on the map')));
     }
     if(prev&&(hasSpot(prev)||(prev.place&&prev.place.desc))){
