@@ -2152,6 +2152,23 @@ window.qrcode=function(type,ecl){
         return {type:type,city:city,country:ad.country||'',lat:+r.lat,lng:+r.lon,addr:type==='city'?'':parts.slice(1,5).join(', ')};
       });
   }
+  function lookupPlaces(name){
+    return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&accept-language=en&q='+encodeURIComponent(name))
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(a){
+        return (Array.isArray(a)?a:[]).map(function(r){
+          var ad=r.address||{}, cl=r.class||'', ty=r.type||'', type='see';
+          if(cl==='place'||cl==='boundary') type='city';
+          else if(cl==='tourism'&&/^(hotel|guest_house|hostel|motel|apartment|resort|chalet)$/.test(ty)) type='stay';
+          else if(cl==='amenity'&&/^(restaurant|cafe|bar|pub|fast_food|food_court|ice_cream|biergarten)$/.test(ty)) type='eat';
+          var city=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.county||ad.state_district||'';
+          if(type==='city') city=r.name||city;
+          var parts=(r.display_name||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+          var label=parts.length>3?parts.slice(0,2).concat(parts.slice(-1)).join(', '):parts.join(', ');
+          return {type:type,city:city,country:ad.country||'',lat:+r.lat,lng:+r.lon,addr:type==='city'?'':parts.slice(1,5).join(', '),label:label};
+        });
+      });
+  }
   function checkShare(){
     var q; try{ q=new URLSearchParams(location.search); }catch(e){ return; }
     var ti=q.get('title')||'', tx=q.get('text')||'', ur=q.get('url')||'';
@@ -2181,20 +2198,30 @@ window.qrcode=function(type,ecl){
     f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'sh-c'},'Country'),inC,dl));
     f.appendChild(h('div',{class:'label'},'Add it as')); f.appendChild(grid);
     if(sh.addr) f.appendChild(h('p',{class:'note'},sh.addr));
-    f.appendChild(st);
-    f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'submit'},'Save'),h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
-    if(!sh.addr&&sh.name){
-      st.textContent='Looking up the place\u2026';
-      lookupPlace(sh.name).then(function(r){
-        if(!r){ st.textContent='Could not find it. Type the city and the country.'; return; }
-        if(!inT.value.trim()&&r.city) inT.value=r.city;
-        if(!inC.value.trim()&&r.country){ var ec=countries.filter(function(c){ return c.name.toLowerCase()===r.country.toLowerCase(); })[0]; inC.value=ec?ec.name:r.country; }
-        if(r.addr&&!sh.addr) sh.addr=r.addr;
-        if(typeof sh.lat!=='number'&&isFinite(r.lat)){ sh.lat=r.lat; sh.lng=r.lng; }
-        if(!touched){ type=r.type; sync(); }
-        st.textContent='Looked up on OpenStreetMap. Check the city and the country.';
+    var alts=h('div',{style:'display:flex;flex-direction:column;gap:6px'});
+    function applyHit(r,force){
+      if(r.city&&(force||!inT.value.trim())) inT.value=r.city;
+      if(r.country&&(force||!inC.value.trim())){ var ec=countries.filter(function(c){ return c.name.toLowerCase()===r.country.toLowerCase(); })[0]; inC.value=ec?ec.name:r.country; }
+      if(force||!sh.addr) sh.addr=r.addr||'';
+      if((force||typeof sh.lat!=='number')&&isFinite(r.lat)){ sh.lat=r.lat; sh.lng=r.lng; }
+      if(force?!touched:!touched){ type=r.type; sync(); }
+    }
+    function runLookup(q){
+      if(!q){ st.textContent='Type the name first.'; return; }
+      st.textContent='Looking up the place\u2026'; alts.textContent='';
+      lookupPlaces(q).then(function(list){
+        if(!list.length){ st.textContent='Could not find it. Try other words, or type the city and the country.'; return; }
+        applyHit(list[0],true);
+        st.textContent=list.length>1?'Wrong place? Tap the right one below, or change the name and search again.':'Looked up on OpenStreetMap. Check the city and the country.';
+        if(list.length>1) list.forEach(function(r){
+          alts.appendChild(h('button',{class:'btn quiet sm',type:'button',style:'text-align:left;letter-spacing:.02em;text-transform:none',on:{click:function(){ applyHit(r,true); st.textContent='Chosen: '+r.label; }}},r.label));
+        });
       }).catch(function(){ st.textContent='Could not look it up. Check your internet connection, then type the city and the country.'; });
     }
+    f.appendChild(st); f.appendChild(alts);
+    if(!sh.addr) f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ runLookup(inN.value.trim()); }}},'Search again')));
+    f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'submit'},'Save'),h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    if(!sh.addr&&sh.name) runLookup(sh.name);
     f.addEventListener('submit',function(e){
       e.preventDefault();
       var nm=inN.value.trim(), cityN=inT.value.trim()||(type==='city'?nm:''), cn=inC.value.trim();
