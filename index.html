@@ -1957,7 +1957,7 @@ window.qrcode=function(type,ecl){
       if(un.length) chip.appendChild(document.createTextNode(un.length+(un.length===1?' city':' cities')+' not on the map'));
     }
     function select(id,fly){
-      mapSel=id||'';
+      mapSel=id||''; clearTap();
       if(map.getLayer('pt-sel')) map.setFilter('pt-sel',['all',['!',['has','point_count']],['==',['get','id'],mapSel]]);
       showCard();
       var t=id?cityOf(id):null;
@@ -1976,13 +1976,29 @@ window.qrcode=function(type,ecl){
       card.appendChild(h('button',{class:'btn quiet sm',type:'button','aria-label':'Close',on:{click:function(){ select('',false); }}},'×'));
     }
 
-    /* search your own cities */
-    var inp=h('input',{class:'mf-search',type:'search',placeholder:'Search your cities','aria-label':'Search your cities',autocomplete:'off'}), res=h('div',{class:'mf-res'});
+    /* search your own cities, or any place in the world to add it */
+    var inp=h('input',{class:'mf-search',type:'search',placeholder:'Search a city or a place','aria-label':'Search a city or a place',autocomplete:'off'}), res=h('div',{class:'mf-res'});
     res.hidden=true;
+    function resNote(t){ res.textContent=''; res.appendChild(h('div',{class:'note',style:'padding:12px 14px'},t)); res.hidden=false; }
+    function onlineSearch(q){
+      if(!q) return;
+      resNote('Searching…');
+      lookupPlaces(q).then(function(list){
+        if(!list.length){ resNote('Nothing found. Try other words.'); return; }
+        res.textContent='';
+        list.forEach(function(r){
+          res.appendChild(h('button',{type:'button',on:{click:function(){
+            res.hidden=true; inp.value='';
+            if(isFinite(r.lat)) map.easeTo({center:[r.lng,r.lat],zoom:Math.max(map.getZoom(),r.type==='city'?7:13),duration:700});
+            openShare({state:r.state,name:r.name,city:r.city,country:r.country,addr:r.addr,type:r.type,lat:r.lat,lng:r.lng,done:true});
+          }}},h('span',null,r.label)));
+        });
+        res.hidden=false;
+      }).catch(function(){ resNote('Could not search. Check your internet connection.'); });
+    }
     inp.addEventListener('input',function(){
-      var q=inp.value.trim().toLowerCase(); res.textContent=''; if(!q){ res.hidden=true; return; }
+      var raw=inp.value.trim(), q=raw.toLowerCase(); res.textContent=''; if(!q){ res.hidden=true; return; }
       var m=cities.filter(function(t){ var c=countryOf(t.cid)||{name:''}; return t.name.toLowerCase().indexOf(q)>=0||c.name.toLowerCase().indexOf(q)>=0; }).slice(0,6);
-      if(!m.length){ res.appendChild(h('div',{class:'note',style:'padding:12px 14px'},'No city found.')); res.hidden=false; return; }
       m.forEach(function(t){
         var c=countryOf(t.cid)||{name:''};
         res.appendChild(h('button',{type:'button',on:{click:function(){
@@ -1990,8 +2006,10 @@ window.qrcode=function(type,ecl){
           if(typeof t.lat==='number') select(t.id,true); else say(t.name+' is not on the map yet. Tap "not on the map" to place it.');
         }}},h('b',null,t.name),h('span',{class:'sci'},fl(c.name)+c.name)));
       });
+      res.appendChild(h('button',{type:'button',on:{click:function(){ onlineSearch(raw); }}},h('b',null,'+ Add: search the map for “'+raw+'”')));
       res.hidden=false;
     });
+    inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); onlineSearch(inp.value.trim()); } });
     top.appendChild(inp); top.appendChild(res);
     var chip=h('button',{class:'mf-chip',type:'button',on:{click:function(){ unplacedSheet(); }}},''); chip.hidden=true; top.appendChild(chip);
 
@@ -2009,6 +2027,29 @@ window.qrcode=function(type,ecl){
         h('button',{class:'btn solid',type:'button',on:{click:function(){ cities.forEach(function(t){ if(typeof t.lat!=='number') delete t.geo; }); closeSheet(); say('Looking up the cities again…'); geocodeAll().then(function(){ refresh(); say('Done.'); }); }}},'Try again'),
         h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Close')));
       openSheet();
+    }
+    /* tap anywhere on the map to add a place there */
+    var tapMk=null;
+    function clearTap(){ if(tapMk){ try{ tapMk.remove(); }catch(e){} tapMk=null; } }
+    function tapAdd(ll){
+      clearTap(); mapSel=''; if(map.getLayer('pt-sel')) map.setFilter('pt-sel',['all',['!',['has','point_count']],['==',['get','id'],'']]);
+      tapMk=new maplibregl.Marker({color:'#A98C55'}).setLngLat([ll.lng,ll.lat]).addTo(map);
+      card.textContent=''; card.hidden=false;
+      var info=h('div',{class:'grow'},h('b',{class:'cname'},'Looking up\u2026'));
+      card.appendChild(info);
+      card.appendChild(h('button',{class:'btn quiet sm',type:'button','aria-label':'Close',on:{click:function(){ clearTap(); card.hidden=true; }}},'\u00d7'));
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&accept-language=en&zoom=18&lat='+ll.lat+'&lon='+ll.lng)
+        .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(r){
+          if(!tapMk) return;
+          var ad=r.address||{}, parts=(r.display_name||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+          var city=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.suburb||ad.hamlet||ad.locality||ad.county||ad.state_district||ad.state||ad.region||'';
+          var name=r.name||ad.tourism||ad.amenity||ad.road||parts[0]||city||'New place';
+          var hit={state:ad.state||ad.region||'',name:name,city:city,country:ad.country||'',addr:parts.slice(1,5).join(', '),type:'see',lat:ll.lat,lng:ll.lng,done:true};
+          info.textContent=''; info.appendChild(h('b',{class:'cname'},name)); info.appendChild(h('div',{class:'sci'},hit.addr||hit.country));
+          card.insertBefore(h('div',{class:'mf-act'},
+            h('button',{class:'btn solid sm',type:'button',on:{click:function(){ clearTap(); card.hidden=true; openShare(hit); }}},'Add')),card.lastChild);
+        }).catch(function(){ info.textContent=''; info.appendChild(h('b',{class:'cname'},'Could not look it up')); info.appendChild(h('div',{class:'sci'},'Check your internet connection, then tap again.')); });
     }
     function startPlacing(t){
       mapPlacing=t; select('',false);
@@ -2040,7 +2081,7 @@ window.qrcode=function(type,ecl){
       }
       res.hidden=true;
       var bb=[[e.point.x-14,e.point.y-14],[e.point.x+14,e.point.y+14]], fs=map.getLayer('cl')?map.queryRenderedFeatures(bb,{layers:['cl','pt']}):[];
-      if(!fs.length){ if(mapSel) select('',false); return; }
+      if(!fs.length){ if(mapSel){ select('',false); return; } tapAdd(e.lngLat); return; }
       var f=fs[0];
       if(f.properties&&f.properties.cluster_id!==undefined){
         var src=map.getSource('pins'), z=src.getClusterExpansionZoom(f.properties.cluster_id);
@@ -2146,7 +2187,7 @@ window.qrcode=function(type,ecl){
         if(cl==='place'||cl==='boundary') type='city';
         else if(cl==='tourism'&&/^(hotel|guest_house|hostel|motel|apartment|resort|chalet)$/.test(ty)) type='stay';
         else if(cl==='amenity'&&/^(restaurant|cafe|bar|pub|fast_food|food_court|ice_cream|biergarten)$/.test(ty)) type='eat';
-        var city=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.county||ad.state_district||'';
+        var city=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.suburb||ad.hamlet||ad.locality||ad.county||ad.state_district||ad.state||ad.region||'';
         if(type==='city') city=r.name||city;
         var parts=(r.display_name||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
         return {type:type,city:city,country:ad.country||'',lat:+r.lat,lng:+r.lon,addr:type==='city'?'':parts.slice(1,5).join(', ')};
@@ -2161,11 +2202,11 @@ window.qrcode=function(type,ecl){
           if(cl==='place'||cl==='boundary') type='city';
           else if(cl==='tourism'&&/^(hotel|guest_house|hostel|motel|apartment|resort|chalet)$/.test(ty)) type='stay';
           else if(cl==='amenity'&&/^(restaurant|cafe|bar|pub|fast_food|food_court|ice_cream|biergarten)$/.test(ty)) type='eat';
-          var city=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.county||ad.state_district||'';
+          var city=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.suburb||ad.hamlet||ad.locality||ad.county||ad.state_district||ad.state||ad.region||'';
           if(type==='city') city=r.name||city;
           var parts=(r.display_name||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
           var label=parts.length>3?parts.slice(0,2).concat(parts.slice(-1)).join(', '):parts.join(', ');
-          return {type:type,city:city,country:ad.country||'',lat:+r.lat,lng:+r.lon,addr:type==='city'?'':parts.slice(1,5).join(', '),label:label};
+          return {state:ad.state||ad.region||'',name:r.name||parts[0]||'',type:type,city:city,country:ad.country||'',lat:+r.lat,lng:+r.lon,addr:type==='city'?'':parts.slice(1,5).join(', '),label:label};
         });
       });
   }
@@ -2221,13 +2262,14 @@ window.qrcode=function(type,ecl){
     f.appendChild(st); f.appendChild(alts);
     if(!sh.addr) f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn quiet sm',type:'button',on:{click:function(){ runLookup(inN.value.trim()); }}},'Search again')));
     f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'submit'},'Save'),h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
-    if(!sh.addr&&sh.name) runLookup(sh.name);
+    if(!sh.addr&&sh.name&&!sh.done) runLookup(sh.name);
     f.addEventListener('submit',function(e){
       e.preventDefault();
       var nm=inN.value.trim(), cityN=inT.value.trim()||(type==='city'?nm:''), cn=inC.value.trim();
-      if(!cn){ st.textContent='Enter the country.'; inC.focus(); return; }
-      if(!cityN){ st.textContent='Enter the city.'; inT.focus(); return; }
-      if(type!=='city'&&!nm){ st.textContent='Enter the name.'; inN.focus(); return; }
+      function bad(msg,el){ st.textContent=msg; st.style.color='var(--danger)'; st.style.fontWeight='700'; try{ st.scrollIntoView({block:'center'}); }catch(e){} el.focus(); }
+      if(!cityN) cityN=sh.state||cn;
+      if(!cn){ bad('Enter the country (the box above), then tap Save again.',inC); return; }
+      if(type!=='city'&&!nm){ bad('Enter the name, then tap Save again.',inN); return; }
       if(isSample){ countries=[]; cities=[]; isSample=false; $('#notice').dataset.msg=''; $('#notice').hidden=true; }
       var c=countries.filter(function(x){ return x.name.toLowerCase()===cn.toLowerCase(); })[0];
       if(!c){ c={id:uid('c'),name:cn}; countries.push(c); }
