@@ -2133,8 +2133,8 @@ window.qrcode=function(type,ecl){
       g.appendChild(h('div',{class:'label',style:'margin-top:12px'},k[1]));
       arr.forEach(function(p,i){
         g.appendChild(h('div',{class:'pl'},
-          h('div',{class:'grow'},h('b',null,p.n),p.note?h('div',{class:'note'},p.note):null),
-          h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.n+', '+t.name+', '+c.name),target:'_blank',rel:'noopener'},'Maps'),
+          h('div',{class:'grow'},h('b',null,p.n),p.addr?h('div',{class:'pdesc'},p.addr):null,p.note?h('div',{class:'note'},p.note):null),
+          h('a',{class:'btn sm',href:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.addr?p.n+', '+p.addr:p.n+', '+t.name+', '+c.name),target:'_blank',rel:'noopener'},'Maps'),
           t.sample?null:twoStep('Remove','Sure?',function(){ arr.splice(i,1); t.places[k[0]]=arr; saveData().then(render); })));
       });
       if(!t.sample) g.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn sm',type:'button',on:{click:function(){openPlace(t,k)}}},'+ Add')));
@@ -2529,6 +2529,7 @@ window.qrcode=function(type,ecl){
     g.appendChild(sec('Visited'));
     if(t.sample){ g.appendChild(h('p',{class:'note'},t.visited?fmtM(t.visited):'Not set')); }
     else { var vi=h('input',{type:'month',value:t.visited||'','aria-label':'Month visited'}); vi.addEventListener('change',function(){ t.visited=vi.value; saveData(); }); g.appendChild(h('div',{class:'field'},vi)); }
+    placesBlock(g,c,t);
     g.appendChild(sec('Photos'));
     if(!pics.length) g.appendChild(h('p',{class:'note'},t.sample?'Photos you add will show here.':'No photos yet. Tap Add photos.'));
     var gal=h('div',{class:'gal'});
@@ -2733,6 +2734,93 @@ window.qrcode=function(type,ecl){
     p.appendChild(f); openSheet();
   }
 
+  /* ---- add a place shared from Google Maps (city, hotel, restaurant, sight) ---- */
+  var HOTEL=/hotel|hostel|resort|\binn\b|lodge|villa|guest ?house|airbnb|b&b|suites|apartment|aparthotel|posada|hospedaje|cabin|cabana|bungalow/i;
+  var FOOD=/restaurant|restaurante|cafe|caf\u00e9|coffee|\bbar\b|\bpub\b|bistro|grill|pizz|kitchen|diner|bakery|panader|brewery|taqueria|sushi|eatery|cocina|\bsoda\b/i;
+  function readShared(raw){
+    var trim=function(x){ return x.trim(); };
+    var url=(raw.match(/https?:\/\/\S+/)||[''])[0];
+    var lines=raw.replace(/https?:\/\/\S+/g,'').split(/\n+/).map(trim).filter(Boolean), seen={};
+    lines=lines.filter(function(x){ var k=x.toLowerCase(); if(seen[k]) return false; seen[k]=1; return true; });
+    var name=lines[0]||'', addr=lines.slice(1).join(', ');
+    if(lines.length===1&&name.indexOf(',')>0){ var sp=name.split(',').map(trim); name=sp[0]; addr=sp.slice(1).join(', '); }
+    var segs=addr.split(',').map(trim).filter(Boolean);
+    var country=(segs[segs.length-1]||'').replace(/[\d\s-]+$/,'').trim(), kind=(segs.length<=2&&!/\d/.test(addr))?'city':'place', city='';
+    if(kind==='city') city=name;
+    else { var rest=segs.slice(0,-1);
+      for(var i=rest.length-1;i>=0;i--){ var g=rest[i];
+        if(/^\d/.test(g)){ city=g.replace(/^[\d\s-]+/,''); break; }
+        if(/\d$/.test(g)) continue;
+        city=g; break; } }
+    city=city.replace(/\s+[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/,'').trim();
+    return {name:name,addr:addr,city:city,country:country,url:url,spot:parseSpot(url),cat:kind==='city'?'city':HOTEL.test(name)?'stay':FOOD.test(name)?'eat':'see'};
+  }
+  function findCountry(n){ var l=n.toLowerCase(), k=ccOf(n); return countries.filter(function(c){ return !c.sample&&(c.name.toLowerCase()===l||(k&&ccOf(c.name)===k)); })[0]; }
+  function openShare(raw){
+    var p=$('#panel'); p.textContent='';
+    if(!raw||!raw.trim()){
+      var ta0=h('textarea',{class:'notes',rows:'4','aria-label':'Text shared by Google Maps',placeholder:'Paste what Google Maps shared'}), st0=h('p',{class:'note'},'');
+      p.appendChild(h('h2',null,'From Google Maps'));
+      p.appendChild(h('p',{class:'note'},'In Google Maps, open a place, tap Share, then choose this app. Or paste the shared text here.'));
+      p.appendChild(ta0); p.appendChild(st0);
+      p.appendChild(h('div',{class:'btnrow'},
+        h('button',{class:'btn solid',type:'button',on:{click:function(){ if(!ta0.value.trim()){ st0.textContent='Paste the shared text first.'; return; } openShare(ta0.value); }}},'Read it'),
+        h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+      openSheet(); return;
+    }
+    var d=readShared(raw), cat=d.cat, found=null, init={city:d.city,country:d.country};
+    var inN=h('input',{id:'f-sn',type:'text',autocomplete:'off',value:d.name}), inT=h('input',{id:'f-st',type:'text',autocomplete:'off',value:d.city}), inC=h('input',{id:'f-sc',type:'text',autocomplete:'off',list:'dl-sc',value:d.country});
+    var dl=h('datalist',{id:'dl-sc'}); countries.filter(function(c){return !c.sample}).sort(byName).forEach(function(c){ dl.appendChild(h('option',{value:c.name})); });
+    var st=h('p',{class:'note'},'Looking up the place\u2026'), f=h('form',{style:'display:flex;flex-direction:column;gap:14px'});
+    var chips=h('div',{style:'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px'});
+    [['city','The city'],['stay','Where I stayed'],['eat','Where I ate'],['see','What to see']].forEach(function(k){
+      var b=h('button',{class:'chip',type:'button','aria-pressed':String(k[0]===cat),on:{click:function(){ cat=k[0]; [].forEach.call(chips.children,function(x){ x.setAttribute('aria-pressed',String(x===b)); }); }}},k[1]); chips.appendChild(b);
+    });
+    f.appendChild(h('h2',null,'Add from Google Maps'));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-sn'},'Name'),inN));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-st'},'City'),inT));
+    f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-sc'},'Country'),inC,dl));
+    f.appendChild(h('div',{class:'label'},'Add it as')); f.appendChild(chips);
+    if(d.addr) f.appendChild(h('p',{class:'pdesc'},d.addr));
+    f.appendChild(st);
+    f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'submit'},'Save'),h('button',{class:'btn quiet',type:'button',on:{click:closeSheet}},'Cancel')));
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var nm=inN.value.trim(), tn=inT.value.trim(), cn=inC.value.trim();
+      if(!cn){ st.textContent='Enter a country first.'; inC.focus(); return; }
+      if(!tn){ st.textContent='Enter a city first.'; inT.focus(); return; }
+      if(cat!=='city'&&!nm){ st.textContent='Enter a name first.'; inN.focus(); return; }
+      if(isSample){ countries=[]; cities=[]; isSample=false; $('#notice').dataset.msg=''; $('#notice').hidden=true; }
+      var c=findCountry(cn); if(!c){ c={id:uid('c'),name:cn}; countries.push(c); }
+      var t=cities.filter(function(x){ return x.cid===c.id&&x.name.toLowerCase()===tn.toLowerCase(); })[0];
+      if(!t){ t={id:uid('t'),cid:c.id,name:tn,desc:'',photos:[]}; cities.push(t); }
+      var ll=found||d.spot;
+      if(cat==='city'){ if(typeof t.lat!=='number'&&ll){ t.lat=ll.lat; t.lng=ll.lng; } }
+      else {
+        t.places=t.places||{}; var arr=(t.places[cat]=t.places[cat]||[]);
+        if(!arr.some(function(x){ return x.n.toLowerCase()===nm.toLowerCase(); })){ var it={n:nm,note:''}; if(d.addr) it.addr=d.addr; if(ll){ it.lat=ll.lat; it.lng=ll.lng; } arr.push(it); }
+      }
+      saveData().then(function(){ closeSheet(); go('#c/'+encodeURIComponent(c.id)+'/'+encodeURIComponent(t.id)); });
+    });
+    p.appendChild(f); openSheet();
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language=en&q='+encodeURIComponent((d.name+' '+d.addr).trim()))
+      .then(function(r){ return r.json(); })
+      .then(function(a){
+        if(!Array.isArray(a)||!a[0]){ st.textContent='Check the details, then save.'; return; }
+        var r=a[0], ad=r.address||{}; found={lat:+r.lat,lng:+r.lon};
+        var ct=ad.city||ad.town||ad.village||ad.municipality||ad.city_district||ad.county||'';
+        if(ct&&d.cat!=='city'&&inT.value.trim()===init.city) inT.value=ct;
+        if(ad.country&&!ccOf(init.country)&&inC.value.trim()===init.country) inC.value=ad.country;
+        st.textContent='Found on the map. Check the details, then save.';
+      }).catch(function(){ st.textContent='Could not look up the place. Check the details, then save.'; });
+  }
+  function checkShare(){
+    var q=new URLSearchParams(location.search), raw=[q.get('title'),q.get('text'),q.get('url')].filter(Boolean).join('\n');
+    if(!raw) return;
+    history.replaceState(null,'',location.pathname+location.hash);
+    openShare(raw);
+  }
+
   /* add a country, a city, a description and photos in one go */
   function openAdd(pre){
     pre=pre||{};
@@ -2746,6 +2834,7 @@ window.qrcode=function(type,ecl){
     var inT=h('input',{id:'f-city',type:'text',autocomplete:'off'});
     var ta=h('textarea',{id:'f-desc',class:'notes',rows:'3',placeholder:'Optional'});
     f.appendChild(h('h2',null,pre.country?'Add a city':'Add a place'));
+    f.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){ closeSheet(); openShare(''); }}},'From Google Maps')));
     f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-country'},'Country'),inC,dl));
     f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-city'},'City (optional)'),inT));
     f.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-desc'},'Description'),ta));
@@ -2794,7 +2883,7 @@ window.qrcode=function(type,ecl){
   isSample=true; route(true);
   Promise.all([get('countries'),get('cities'),get('lastBackup'),get('sync'),get('tomb')]).then(function(r){ lastBackup=r[2]||''; sy=r[3]||sy; tomb=r[4]||{};
     if(Array.isArray(r[0])){ countries=r[0]; cities=Array.isArray(r[1])?r[1]:[]; isSample=false; }
-    initJ(); ready=true; route(true); setTimeout(function(){ syncNow(true); },1500);
+    initJ(); ready=true; route(true); checkShare(); setTimeout(function(){ syncNow(true); },1500);
   });
 })();
 </script>
