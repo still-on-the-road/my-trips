@@ -2286,6 +2286,7 @@ window.qrcode=function(type,ecl){
       var arr=t.places[k[0]]||[];
       g.appendChild(h('div',{class:'label',style:'margin-top:12px'},k[1]));
       arr.forEach(function(p,i){
+        if(!t.sample) migrateImg(p);
         g.appendChild(h('div',{class:'pl'},
           p.img?h('img',{class:'th',src:p.img,alt:'',loading:'lazy',on:{error:function(e){ e.target.remove(); }}}):null,
           h('div',{class:'grow'},h('b',null,p.n),p.a?h('div',{class:'pdesc'},p.a):null,p.note?h('div',{class:'note'},p.note):null),
@@ -2308,16 +2309,38 @@ window.qrcode=function(type,ecl){
         return pg.filter(function(x){ return x.thumbnail&&x.thumbnail.source; }).map(function(x){ return {title:x.title,src:x.thumbnail.source}; });
       });
   }
+  /* keep the photo inside the app (small square JPEG) so it still shows later and offline */
+  function toData(src){
+    return new Promise(function(res){
+      var im=new Image(); im.crossOrigin='anonymous';
+      im.onload=function(){
+        try{
+          var S=240, w=im.naturalWidth, ht=im.naturalHeight, m=Math.min(w,ht), c=document.createElement('canvas'); c.width=S; c.height=S;
+          c.getContext('2d').drawImage(im,(w-m)/2,(ht-m)/2,m,m,0,0,S,S);
+          res(c.toDataURL('image/jpeg',.78));
+        }catch(e){ res(src); }
+      };
+      im.onerror=function(){ res(src); };
+      im.src=src;
+    });
+  }
+  var migr={};
+  function migrateImg(p){
+    if(!p.img||!/^https?:/.test(p.img)||migr[p.img]) return; migr[p.img]=1;
+    toData(p.img).then(function(d){ if(d&&/^data:/.test(d)){ p.img=d; saveData(); } });
+  }
   function autoPhoto(it,cat){
     if(cat!=='see') return Promise.resolve();
-    var q=wikiImages(it.n,1).then(function(r){ if(r[0]) it.img=r[0].src; }).catch(function(){});
-    return Promise.race([q,new Promise(function(res){ setTimeout(res,4000); })]);
+    var timedOut=false;
+    var q=wikiImages(it.n,1).then(function(r){ return r[0]?toData(r[0].src):''; }).then(function(d){ if(d) it.img=d; return !!d; }).catch(function(){ return false; });
+    q.then(function(ok){ if(ok&&timedOut) saveData().then(render); });
+    return Promise.race([q,new Promise(function(res){ setTimeout(function(){ timedOut=true; res(); },6000); })]).then(function(){});
   }
   function editPhoto(pl){
     var p=$('#panel'); p.textContent='';
     var inp=h('input',{id:'f-ph',type:'text',autocomplete:'off',value:pl.n}), st=h('p',{class:'note'},''),
         grid=h('div',{style:'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px'});
-    function pick(src){ if(src) pl.img=src; else delete pl.img; saveData().then(function(){ closeSheet(); render(); }); }
+    function pick(src){ (src?toData(src):Promise.resolve('')).then(function(d){ if(d) pl.img=d; else delete pl.img; return saveData(); }).then(function(){ closeSheet(); render(); }); }
     function search(){
       var q=inp.value.trim(); if(!q){ inp.focus(); return; }
       st.textContent='Searching Wikipedia\u2026'; grid.textContent='';
