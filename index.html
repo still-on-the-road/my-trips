@@ -229,7 +229,20 @@ body.mapmode{padding:0}
 .mapbtns{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
 .mapcard{display:flex;gap:10px;align-items:center;padding:12px 0}
 .pl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(169,140,85,.35)}
-.pl .th{width:64px;height:64px;object-fit:cover;flex:none;display:block;box-shadow:inset 0 0 0 1px var(--line)}
+.pl .th{width:72px;height:72px;object-fit:cover;flex:none;display:block;box-shadow:inset 0 0 0 1px var(--line);cursor:zoom-in}
+#printview{position:fixed;inset:0;z-index:60;background:#fff;color:#1F1C18;overflow:auto;font-family:var(--serif)}
+.pv-bar{position:sticky;top:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--paper);border-bottom:1px solid var(--gold)}
+.pv-doc{max-width:720px;margin:0 auto;padding:18px 18px 60px}
+.pv-doc h1{font:700 26px/1.2 var(--sans);letter-spacing:.06em;margin:0 0 4px;text-transform:uppercase}
+.pv-sub{color:var(--muted);font-style:italic;margin-bottom:14px}
+.pv-doc h2{font:700 13px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin:22px 0 8px;border-bottom:1px solid var(--gold);padding-bottom:4px}
+.pv-doc p{margin:0 0 10px;line-height:1.5}
+.pv-pl{display:flex;gap:12px;padding:8px 0;break-inside:avoid;align-items:flex-start}
+.pv-pl img{width:72px;height:72px;object-fit:cover;flex:none}
+.pv-s{color:var(--muted);font-size:14px}.pv-n{font-style:italic;font-size:14px}
+.pv-pl a{display:block;font-size:13px;color:var(--ink)}
+.pv-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pv-g img{width:100%;aspect-ratio:1/1;object-fit:cover;break-inside:avoid}
+@media print{body.printing>*:not(#printview){display:none!important}body.printing{background:#fff;padding:0}#printview{position:static;overflow:visible;z-index:auto}.pv-bar{display:none}@page{margin:14mm}}
 .pl .pact{display:flex;gap:6px;flex-basis:100%;justify-content:flex-end}
 .pl .grow{min-width:0}
 input.cap{width:100%;font-size:14px;padding:8px 10px;margin:4px 0}
@@ -1677,6 +1690,39 @@ window.qrcode=function(type,ecl){
     L.push('','On the map: '+mapsUrl(t,c));
     return L.join('\n');
   }
+  function exportCityPdf(c,t){
+    var old=$('#printview'); if(old) old.remove();
+    var pv=h('div',{id:'printview'}), bar=h('div',{class:'pv-bar'}), st=h('span',{class:'note'},'Preparing…'), body=h('div',{class:'pv-doc'});
+    var pbtn=h('button',{class:'btn solid sm',type:'button',disabled:'disabled',on:{click:function(){ window.print(); }}},'Print or save as PDF');
+    function close(){ pv.remove(); document.body.classList.remove('printing'); }
+    bar.appendChild(pbtn); bar.appendChild(h('button',{class:'btn quiet sm',type:'button',on:{click:close}},'Close')); bar.appendChild(st);
+    pv.appendChild(bar); pv.appendChild(body); document.body.appendChild(pv); document.body.classList.add('printing');
+    var desc=(t.desc||'').trim();
+    var tr;
+    if(!desc) tr=Promise.resolve('');
+    else if(t.sample||(t.descEn&&t.descEnSrc===t.desc)) tr=Promise.resolve(t.sample?desc:t.descEn);
+    else tr=Promise.race([
+      translateFrEn(desc).then(function(en){ t.descEn=en; t.descEnSrc=t.desc; saveData(); return en; }),
+      new Promise(function(res,rej){ setTimeout(function(){ rej(new Error('slow')); },12000); })
+    ]).catch(function(){ return desc; });
+    var ids=(t.photos||[]).slice(0,12);
+    Promise.all([tr,Promise.all(ids.map(function(q){ return getPhoto(q.id).catch(function(){ return null; }); }))]).then(function(r){
+      var en=r[0], data=r[1].filter(Boolean), rg=fmtRange(t);
+      body.textContent='';
+      body.appendChild(h('h1',null,t.name)); body.appendChild(h('div',{class:'pv-sub'},c.name+(rg?' · '+rg:'')));
+      en.split(/\n+/).forEach(function(x){ if(x.trim()) body.appendChild(h('p',null,x.trim())); });
+      PCATS.forEach(function(k){
+        var arr=(t.places&&t.places[k[0]])||[]; if(!arr.length) return;
+        body.appendChild(h('h2',null,k[1]));
+        arr.forEach(function(q){
+          body.appendChild(h('div',{class:'pv-pl'},q.img?h('img',{src:q.img,alt:''}):null,
+            h('div',null,h('b',null,q.n),q.a?h('div',{class:'pv-s'},q.a):null,q.note?h('div',{class:'pv-n'},q.note):null,h('a',{href:placeUrl(q,t,c)},'Google Maps'))));
+        });
+      });
+      if(data.length){ body.appendChild(h('h2',null,'Photos')); var gr=h('div',{class:'pv-g'}); data.forEach(function(d){ gr.appendChild(h('img',{src:d,alt:''})); }); body.appendChild(gr); }
+      st.textContent='Tap the button, then choose Save as PDF.'; pbtn.removeAttribute('disabled');
+    });
+  }
   function shareCity(c,t){
     var text=cityText(c,t);
     if(navigator.share){ navigator.share({title:t.name+', '+c.name,text:text}).catch(function(){}); return; }
@@ -2396,7 +2442,7 @@ window.qrcode=function(type,ecl){
       arr.forEach(function(p,i){
         if(!t.sample) migrateImg(p);
         g.appendChild(h('div',{class:'pl'},
-          p.img?h('img',{class:'th',src:p.img,alt:'',loading:'lazy',on:{error:function(e){ e.target.remove(); }}}):null,
+          p.img?h('img',{class:'th',src:p.img,alt:'',loading:'lazy',on:{error:function(e){ e.target.remove(); },click:function(){ viewPlacePhoto(p); }}}):null,
           h('div',{class:'grow'},h('b',null,p.n),p.a?h('div',{class:'pdesc'},p.a):null,p.note?h('div',{class:'note'},p.note):null),
           h('div',{class:'pact'},
             h('a',{class:'btn sm',href:p.u||('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.n+', '+(p.a||(t.name+', '+c.name)))),target:'_blank',rel:'noopener'},'Maps'),
@@ -2432,6 +2478,24 @@ window.qrcode=function(type,ecl){
       im.src=src;
     });
   }
+  function fileSquare(f,S){
+    return new Promise(function(res,rej){
+      var u=URL.createObjectURL(f), im=new Image();
+      im.onload=function(){
+        try{ var w=im.naturalWidth,ht=im.naturalHeight,m=Math.min(w,ht),c=document.createElement('canvas'); c.width=S; c.height=S;
+          c.getContext('2d').drawImage(im,(w-m)/2,(ht-m)/2,m,m,0,0,S,S); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg',.8)); }catch(e){ rej(e); }
+      };
+      im.onerror=function(){ URL.revokeObjectURL(u); rej(new Error('img')); };
+      im.src=u;
+    });
+  }
+  function viewPlacePhoto(pl){
+    var pn=$('#panel'); pn.textContent='';
+    pn.appendChild(h('h2',null,pl.n));
+    pn.appendChild(h('img',{src:pl.img,alt:'',style:'width:100%;display:block'}));
+    pn.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:closeSheet}},'Close')));
+    openSheet();
+  }
   var migr={};
   function migrateImg(p){
     if(!p.img||!/^https?:/.test(p.img)||migr[p.img]) return; migr[p.img]=1;
@@ -2448,7 +2512,7 @@ window.qrcode=function(type,ecl){
     var p=$('#panel'); p.textContent='';
     var inp=h('input',{id:'f-ph',type:'text',autocomplete:'off',value:pl.n}), st=h('p',{class:'note'},''),
         grid=h('div',{style:'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px'});
-    function pick(src){ (src?toData(src):Promise.resolve('')).then(function(d){ if(d) pl.img=d; else delete pl.img; return saveData(); }).then(function(){ closeSheet(); render(); }); }
+    function pick(src,raw){ (src?(raw?Promise.resolve(src):toData(src)):Promise.resolve('')).then(function(d){ if(d) pl.img=d; else delete pl.img; return saveData(); }).then(function(){ closeSheet(); render(); }); }
     function search(){
       var q=inp.value.trim(); if(!q){ inp.focus(); return; }
       st.textContent='Searching Wikipedia\u2026'; grid.textContent='';
@@ -2464,7 +2528,16 @@ window.qrcode=function(type,ecl){
     p.appendChild(h('h2',null,pl.n));
     p.appendChild(h('div',{class:'field'},h('label',{class:'label',for:'f-ph'},'Search a photo on Wikipedia'),inp));
     inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); search(); } });
-    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:search}},'Search')));
+    function ownPhoto(){
+      var fi=h('input',{type:'file',accept:'image/*'}); document.body.appendChild(fi);
+      fi.addEventListener('change',function(){
+        var f=fi.files&&fi.files[0]; document.body.removeChild(fi); if(!f) return;
+        st.textContent='Saving the photo…';
+        fileSquare(f,420).then(function(d){ pick(d,true); }).catch(function(){ st.textContent='Could not read that photo.'; });
+      });
+      fi.click();
+    }
+    p.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn solid',type:'button',on:{click:search}},'Search'),h('button',{class:'btn',type:'button',on:{click:ownPhoto}},'My own photo')));
     p.appendChild(st); p.appendChild(grid);
     p.appendChild(h('div',{class:'btnrow'},
       pl.img?h('button',{class:'btn danger',type:'button',on:{click:function(){ pick(null); }}},'No photo'):null,
@@ -2819,6 +2892,7 @@ window.qrcode=function(type,ecl){
     g.appendChild(h('p',{class:'note'},plural(pics.length,'photo','photos')));
     g.appendChild(h('div',{class:'btnrow'},h('a',{class:'btn',href:mapsUrl(t,c),target:'_blank',rel:'noopener',style:'display:flex;align-items:center;justify-content:center;text-decoration:none'},'Open in Google Maps'),
       h('button',{class:'btn',type:'button',on:{click:function(){ shareCity(c,t); }}},'Share this city')));
+    g.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){ exportCityPdf(c,t); }}},'Export to PDF')));
     if(t.sample){
       g.appendChild(h('p',{class:'note'},'This is a sample entry. It disappears when you add your first country.'));
     } else {
