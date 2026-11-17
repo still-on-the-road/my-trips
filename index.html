@@ -1591,7 +1591,7 @@ window.qrcode=function(type,ecl){
 <script>
 (function(){
   var $=function(s){return document.querySelector(s)};
-  var countries=[], cities=[], trips=[], isSample=false, photoCache={}, ready=false;
+  var countries=[], cities=[], trips=[], isSample=false, photoCache={}, thumbCache={}, thumbJobs={}, thumbQ=Promise.resolve(), fullLru=[], WEBP=null, ready=false;
   var state={q:'',c:null,t:null,sort:'az',map:false,trs:false,tr:null}, lastBackup='', sy={url:'',key:'',last:''}, tomb={}, lastJ={}, syncing=false;
 
   /* sample entries, shown until the first real one is added */
@@ -1626,21 +1626,23 @@ window.qrcode=function(type,ecl){
     });
   }
   function put(k,v){
-    memory[k]=v;
+    var pm=/^photo:([^:]+)$/.exec(k);
+    if(!pm) memory[k]=v; else delete thumbCache[pm[1]];
     return db().then(function(d){
-      if(!d) return true;
+      if(!d){ memory[k]=v; return true; }
       return new Promise(function(res){
         try{var t=d.transaction('kv','readwrite'); t.objectStore('kv').put(v,k); t.oncomplete=function(){res(true)}; t.onerror=function(){res(false)}; t.onabort=function(){res(false)}}
-        catch(e){res(false)}
+        catch(e){memory[k]=v; res(false)}
       });
-    });
+    }).then(function(ok){ if(ok&&pm&&typeof v==='string') buildThumb(pm[1],v); return ok; });
   }
   function drop(k){
     delete memory[k];
+    var dm=/^photo:([^:]+)$/.exec(k); if(dm){ delete memory[k+':thumb']; delete thumbCache[dm[1]]; delete thumbJobs[dm[1]]; }
     return db().then(function(d){
       if(!d) return;
       return new Promise(function(res){
-        try{var t=d.transaction('kv','readwrite'); t.objectStore('kv').delete(k); t.oncomplete=res; t.onerror=res; t.onabort=res}
+        try{var t=d.transaction('kv','readwrite'); t.objectStore('kv').delete(k); if(dm) t.objectStore('kv').delete(k+':thumb'); t.oncomplete=res; t.onerror=res; t.onabort=res}
         catch(e){res()}
       });
     });
@@ -1659,7 +1661,43 @@ window.qrcode=function(type,ecl){
   function saveData(){ stamp(); return persist(); }
   function getPhoto(id){
     if(photoCache[id]!==undefined) return Promise.resolve(photoCache[id]);
-    return get('photo:'+id).then(function(v){photoCache[id]=v||null; return photoCache[id]});
+    return get('photo:'+id).then(function(v){ if(v) cacheFull(id,v); else photoCache[id]=null; return v||null; });
+  }
+  /* keep only the last few full photos in memory */
+  function cacheFull(id,data){
+    photoCache[id]=data; var i=fullLru.indexOf(id); if(i>=0) fullLru.splice(i,1); fullLru.push(id);
+    while(fullLru.length>6) photoCache[fullLru.shift()]=undefined;
+  }
+  /* thumbnails: ~560px previews stored as photo:<id>:thumb, used in cards and galleries */
+  function makeThumb(src){
+    return new Promise(function(res,rej){
+      var im=new Image();
+      im.onload=function(){
+        try{
+          var M=560, w=im.naturalWidth, ht=im.naturalHeight, s=Math.min(1,M/Math.max(w,ht)), c=document.createElement('canvas');
+          c.width=Math.max(1,Math.round(w*s)); c.height=Math.max(1,Math.round(ht*s));
+          c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+          if(WEBP===null) WEBP=c.toDataURL('image/webp',.7).indexOf('data:image/webp')===0;
+          res(WEBP?c.toDataURL('image/webp',.72):c.toDataURL('image/jpeg',.75));
+        }catch(e){ rej(e); }
+      };
+      im.onerror=function(){ rej(new Error('img')); };
+      im.src=src;
+    });
+  }
+  function trackThumb(id,p){ thumbJobs[id]=p; var d=function(){ if(thumbJobs[id]===p) delete thumbJobs[id]; }; p.then(d,d); return p; }
+  function buildThumb(id,src){
+    var job=thumbQ.then(function(){ return makeThumb(src); }).then(function(t){ thumbCache[id]=t; return put('photo:'+id+':thumb',t).then(function(){ return t; }); }).catch(function(){ return null; });
+    thumbQ=job.then(function(){});
+    return trackThumb(id,job);
+  }
+  function getThumb(id){
+    if(thumbCache[id]) return Promise.resolve(thumbCache[id]);
+    if(thumbJobs[id]) return thumbJobs[id];
+    return trackThumb(id,get('photo:'+id+':thumb').then(function(t){
+      if(t){ thumbCache[id]=t; return t; }
+      return get('photo:'+id).then(function(full){ return full?buildThumb(id,full):null; });
+    }).catch(function(){ return null; }));
   }
 
   /* small DOM helper (text only, never HTML) */
@@ -1774,9 +1812,9 @@ window.qrcode=function(type,ecl){
       box.addEventListener('click',onzoom);
       box.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); onzoom(); } });
     }
-    if(p) getPhoto(p.id).then(function(src){
+    if(p) getThumb(p.id).then(function(src){ return src||getPhoto(p.id); }).then(function(src){
       if(!src) return;
-      var im=new Image(); im.alt='';
+      var im=new Image(); im.alt=''; im.decoding='async';
       im.onload=function(){ if(p.crop) im.style.transform=cropCss(p.crop); box.appendChild(im); };
       im.src=src;
     });
@@ -1841,7 +1879,7 @@ window.qrcode=function(type,ecl){
       var ids=[]; cities.forEach(function(t){ (t.photos||[]).forEach(function(q){ ids.push(q.id); }); });
       var done=0, failed=0, got=0, todo=ids.length;
       return ids.reduce(function(pr,id){ return pr.then(function(){ return get('photo:'+id); }).then(function(loc){
-        if(!loc&&RP[id]) return J(BP+'/'+id+'.json',null,120000).then(function(d){ if(d){ photoCache[id]=d; got++; return put('photo:'+id,d); } });
+        if(!loc&&RP[id]) return J(BP+'/'+id+'.json',null,120000).then(function(d){ if(d){ cacheFull(id,d); got++; return put('photo:'+id,d); } });
         if(loc&&!RP[id]) return J(BP+'/'+id+'.json?print=silent',{method:'PUT',body:JSON.stringify(loc)},120000);
       }).catch(function(){ failed++; }).then(function(){ done++; if(!silent&&todo>3&&done<todo) toast('Photos: '+done+' of '+todo+'…',0); }); },Promise.resolve())
       .then(function(){
@@ -2749,7 +2787,7 @@ window.qrcode=function(type,ecl){
       d.countries.forEach(function(c){ if(!hc[c.id]) countries.push(c); });
       (d.trips||[]).forEach(function(x){ if(!trips.some(function(y){ return y.id===x.id; })) trips.push(x); });
       d.cities.forEach(function(t){ if(ht[t.id]) return; cities.push(t);
-        (t.photos||[]).forEach(function(q){ var data=(d.photos||{})[q.id]; if(!data){ missing++; return; } tot++; jobs=jobs.then(function(){ photoCache[q.id]=data; return putRetry('photo:'+q.id,data,3).then(function(ok){ if(ok) okN++; else bad++; }); }); }); });
+        (t.photos||[]).forEach(function(q){ var data=(d.photos||{})[q.id]; if(!data){ missing++; return; } tot++; jobs=jobs.then(function(){ cacheFull(q.id,data); return putRetry('photo:'+q.id,data,3).then(function(ok){ if(ok) okN++; else bad++; }); }); }); });
       jobs.then(saveData).then(function(){ closeSheet(); render();
         var msg='Restored '+okN+' of '+(tot+missing)+' photos.'+(missing?' '+missing+' are not in the backup file.':'')+(bad?' '+bad+' could not be saved on this phone, try Restore again.':'');
         if(bad&&navigator.storage&&navigator.storage.estimate) navigator.storage.estimate().then(function(e){ say(msg+' Storage used: '+Math.round(e.usage/1e6)+' of '+Math.round(e.quota/1e6)+' MB.'); }); else say(msg); });
@@ -2916,7 +2954,7 @@ window.qrcode=function(type,ecl){
             var base=Date.now();
             list.reduce(function(pr,data,i){
               var id='p-'+base+'-'+i;
-              return pr.then(function(){return put('photo:'+id,data)}).then(function(){ photoCache[id]=data; t.photos=t.photos||[]; t.photos.push({id:id,date:today()}); });
+              return pr.then(function(){return put('photo:'+id,data)}).then(function(){ cacheFull(id,data); t.photos=t.photos||[]; t.photos.push({id:id,date:today()}); });
             },Promise.resolve()).then(saveData).then(function(){render()});
           });
         }}},'Add photos'),
@@ -3414,7 +3452,7 @@ window.qrcode=function(type,ecl){
       if(z<=1.001){ back(); return; }
       var data=null; try{ data=bake(); }catch(e){ data=null; }
       if(!data){ msg.textContent='The picture could not be cropped.'; return; }
-      put('photo:'+t.p.id,data).then(function(){ photoCache[t.p.id]=data; render(); back(); });
+      put('photo:'+t.p.id,data).then(function(){ cacheFull(t.p.id,data); render(); back(); });
     }
     p.appendChild(h('h2',null,'Crop picture'));
     p.appendChild(msg);
@@ -3484,7 +3522,7 @@ window.qrcode=function(type,ecl){
       var base=Date.now();
       photoData.reduce(function(pr,data,i){
         var id='p-'+base+'-'+i;
-        return pr.then(function(){return put('photo:'+id,data)}).then(function(){ photoCache[id]=data; t.photos=t.photos||[]; t.photos.push({id:id,date:today()}); });
+        return pr.then(function(){return put('photo:'+id,data)}).then(function(){ cacheFull(id,data); t.photos=t.photos||[]; t.photos.push({id:id,date:today()}); });
       },Promise.resolve()).then(saveData).then(function(){
         closeSheet();
         go('#c/'+encodeURIComponent(c.id)+(t?'/'+encodeURIComponent(t.id):''));
