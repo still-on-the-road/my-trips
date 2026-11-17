@@ -1827,7 +1827,7 @@ window.qrcode=function(type,ecl){
   function route(keep){
     if(ready&&/^#join=/.test(location.hash)){ joinFromHash(); return; }
     var m=/^#c\/([^\/]+)(?:\/([^\/]+))?$/.exec(location.hash);
-    state.map=location.hash==='#map'; state.trs=location.hash==='#trips'||/^#trip\//.test(location.hash); var mt=/^#trip\/([^\/]+)$/.exec(location.hash); state.tr=mt?decodeURIComponent(mt[1]):null; state.c=m?decodeURIComponent(m[1]):null; state.t=(m&&m[2])?decodeURIComponent(m[2]):null;
+    state.map=location.hash==='#map'; state.stats=location.hash==='#stats'; state.trs=location.hash==='#trips'||/^#trip\//.test(location.hash); var mt=/^#trip\/([^\/]+)$/.exec(location.hash); state.tr=mt?decodeURIComponent(mt[1]):null; state.c=m?decodeURIComponent(m[1]):null; state.t=(m&&m[2])?decodeURIComponent(m[2]):null;
     render(); if(!keep) window.scrollTo(0,0);
   }
   window.addEventListener('hashchange',function(){route(false)});
@@ -3102,6 +3102,47 @@ window.qrcode=function(type,ecl){
   function durText(a,b){ var d=durParts(a,b); return d?d[0]+' '+d[1]:''; }
   function rangeText(a,b){ var r=fmtRange({visited:a,visitedEnd:b}), d=durText(a,b); return r+(r&&d?' \u00b7 ':'')+d; }
 
+  /* stats screen */
+  var NONSOV='AC AI AQ AS AW AX BL BM BQ BV CC CK CP CW CX DG EA EH FK FO GF GG GI GL GP GS GU HK HM IC IM IO JE KY MF MO MP MQ MS NC NF NU PF PM PN PR RE SH SJ SX TA TC TF TK TW UM VG VI WF XK YT'.split(' ');
+  function dayNum(s,e){
+    var ok=/^\d{4}-\d{2}(-\d{2})?$/; if(!ok.test(s||'')||!ok.test(e||s)) return null;
+    var n=Math.round((new Date(dn(e||s,1)+'T00:00:00')-new Date(dn(s,0)+'T00:00:00'))/864e5)+1;
+    return isFinite(n)&&n>0?n:null;
+  }
+  function renderStats(v){
+    var g=h('div',{class:'gallery'});
+    g.appendChild(h('a',{class:'back',href:'#'},'\u2190 Index'));
+    g.appendChild(h('div',null,h('h2',{class:'gtitle'},'Your travels')));
+    var cs=countries.filter(function(c){ return !c.sample; }), ct=cities.filter(function(t){ return !t.sample; });
+    if(!cs.length){ g.appendChild(h('p',{class:'note'},'Add your first country to see your stats.')); v.appendChild(g); return; }
+    var sov=0, terr=0, photos=0, iv=[], approx=false, nodate=0, best=null, first=null;
+    cs.forEach(function(c){ var k=ccOf(c.name); if(k&&NONSOV.indexOf(k)>=0) terr++; else sov++; });
+    ct.forEach(function(t){ photos+=(t.photos||[]).length; });
+    trips.forEach(function(tp){
+      var n=dayNum(tp.start,tp.end); if(n==null){ nodate++; return; }
+      if((tp.start||'').length===7||(tp.end||tp.start||'').length===7) approx=true;
+      iv.push([new Date(dn(tp.start,0)+'T00:00:00').getTime(),new Date(dn(tp.end||tp.start,1)+'T00:00:00').getTime()]);
+      if(!best||n>best.n) best={tp:tp,n:n};
+      if(!first||dn(tp.start,0)<dn(first.start,0)) first=tp;
+    });
+    iv.sort(function(a,b){ return a[0]-b[0]; });
+    var days=0, cur=null;
+    iv.forEach(function(x){ if(cur&&x[0]<=cur[1]+864e5){ if(x[1]>cur[1]) cur[1]=x[1]; } else { if(cur) days+=Math.round((cur[1]-cur[0])/864e5)+1; cur=[x[0],x[1]]; } });
+    if(cur) days+=Math.round((cur[1]-cur[0])/864e5)+1;
+    var pc=sov/195*100, pcs=(pc<10?pc.toFixed(1):String(Math.round(pc)))+'%';
+    function st(n,u){ return h('div',null,h('b',null,String(n)),h('span',null,u)); }
+    g.appendChild(h('div',{class:'stats'},st(cs.length,cs.length===1?'country':'countries'),st(ct.length,ct.length===1?'city':'cities'),st(trips.length,trips.length===1?'trip':'trips'),st(iv.length?(approx?'~':'')+days:'-','days away')));
+    g.appendChild(h('div',{class:'stats'},st(pcs,'of world'),st(best?best.n:'-','longest'),st(first?first.start.slice(0,4):'-','first trip'),st(photos,'photos')));
+    if(best) g.appendChild(h('p',{class:'note'},'Longest trip: '+best.tp.name+' \u00b7 '+rangeText(best.tp.start,best.tp.end)));
+    if(first) g.appendChild(h('p',{class:'note'},'First trip: '+first.name+' \u00b7 '+fmtM(first.start)));
+    var fn=[];
+    if(iv.length) fn.push('Days away counts each trip from start to end, merged where trips overlap.'+(approx?' A date with only a month counts the whole month, so the total is approximate.':''));
+    if(nodate) fn.push(plural(nodate,'trip has','trips have')+' no dates and '+(nodate===1?'is':'are')+' not counted.');
+    fn.push('The world share is out of 195 states (UN members plus Vatican City and Palestine).'+(terr?' '+plural(terr,'entry is a territory','entries are territories')+' and '+(terr===1?'is':'are')+' not counted.':''));
+    fn.forEach(function(x){ g.appendChild(h('p',{class:'note'},x)); });
+    v.appendChild(g);
+  }
+
   function renderTrips(v){
     var g=h('div',{class:'gallery'});
     g.appendChild(h('div',null,h('h2',{class:'gtitle'},plural(trips.length,'trip','trips'))));
@@ -3329,9 +3370,9 @@ window.qrcode=function(type,ecl){
     var tp=state.tr?tripOf(state.tr):null;
     if(state.tr&&!tp&&ready){ state.tr=null; history.replaceState(null,'',location.pathname+location.search+'#trips'); }
     var v=$('#view'); v.textContent='';
-    $('#tools').hidden=!!c||state.map||state.trs;
-    $('#tab-index').setAttribute('aria-pressed',String(!c&&!state.map&&!state.trs)); $('#tab-map').setAttribute('aria-pressed',String(!!state.map)); $('#tab-trips').setAttribute('aria-pressed',String(!!state.trs));
-    if(state.map) renderMap(v); else if(state.trs){ if(tp) renderTrip(v,tp); else renderTrips(v); } else if(t) renderCity(v,c,t); else if(c) renderCountry(v,c); else { renderIndex(v); v.appendChild(syncBlock()); v.appendChild(backupBlock()); }
+    $('#tools').hidden=!!c||state.map||state.trs||state.stats;
+    $('#tab-index').setAttribute('aria-pressed',String(!c&&!state.map&&!state.trs&&!state.stats)); $('#tab-map').setAttribute('aria-pressed',String(!!state.map)); $('#tab-trips').setAttribute('aria-pressed',String(!!state.trs));
+    if(state.stats) renderStats(v); else if(state.map) renderMap(v); else if(state.trs){ if(tp) renderTrip(v,tp); else renderTrips(v); } else if(t) renderCity(v,c,t); else if(c) renderCountry(v,c); else { v.appendChild(h('div',{class:'btnrow'},h('button',{class:'btn',type:'button',on:{click:function(){ go('#stats'); }}},'Stats'))); renderIndex(v); v.appendChild(syncBlock()); v.appendChild(backupBlock()); }
     var nb=$('#notice');
     if(!isSample && nb.dataset.sample){ delete nb.dataset.sample; if(!nb.dataset.msg){ nb.hidden=true; nb.textContent=''; } }
     if(isSample && !nb.dataset.msg){ nb.dataset.sample='1'; nb.hidden=false; nb.textContent=''; nb.appendChild(h('span',null,h('b',null,'Sample entries. '),'These show how the index looks. Tap Add to start your own list; the samples disappear.')); }
